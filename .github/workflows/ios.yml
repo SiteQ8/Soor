@@ -1,0 +1,115 @@
+name: ios-release
+on:
+  push:
+    tags:
+      - "ios-v*"
+  workflow_dispatch:
+
+# Signs the app and uploads it to App Store Connect (TestFlight) on a macOS
+# runner, so no Mac is needed. Triggered by an ios-v* tag. All signing material
+# comes from repo secrets; nothing sensitive is committed.
+#
+# Required secrets (set with tools/ios/set-secrets.py):
+#   IOS_CERT_P12         base64 of the Apple Distribution .p12
+#   IOS_CERT_PASSWORD    the .p12 password
+#   IOS_PROFILE          base64 of SoorProfile.mobileprovision
+#   ASC_KEY_ID           App Store Connect API key id
+#   ASC_ISSUER_ID        App Store Connect API issuer id
+#   ASC_KEY_P8           the App Store Connect API .p8 key contents
+
+jobs:
+  upload:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Import signing certificate and profile
+        env:
+          IOS_CERT_P12: ${{ secrets.IOS_CERT_P12 }}
+          IOS_CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+          IOS_PROFILE: ${{ secrets.IOS_PROFILE }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN=$RUNNER_TEMP/soor.keychain-db
+          KP=$(uuidgen)
+          security create-keychain -p "$KP" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KP" "$KEYCHAIN"
+
+          echo "$IOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -P "$IOS_CERT_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: -k "$KP" "$KEYCHAIN" >/dev/null
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$IOS_PROFILE" | base64 --decode > "$RUNNER_TEMP/soor.mobileprovision"
+          UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" \
+            /dev/stdin <<< "$(security cms -D -i "$RUNNER_TEMP/soor.mobileprovision")")
+          cp "$RUNNER_TEMP/soor.mobileprovision" \
+            "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+          echo "PROFILE_UUID=$UUID" >> "$GITHUB_ENV"
+
+      - name: Archive
+        working-directory: ios/Soor
+        run: |
+          set -euo pipefail
+          xcodebuild -project Soor.xcodeproj -scheme Soor \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/Soor.xcarchive" \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM=FKZPXUFH45 \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            clean archive
+
+      - name: Write ExportOptions.plist
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>FKZPXUFH45</string>
+            <key>uploadSymbols</key><true/>
+            <key>signingStyle</key><string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.eworldq8.soor</key><string>${PROFILE_UUID}</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Export .ipa
+        run: |
+          set -euo pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Soor.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export"
+
+      - name: Upload to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          IPA=$(ls "$RUNNER_TEMP/export/"*.ipa | head -1)
+          xcrun altool --upload-app -f "$IPA" -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+
+      - name: Upload .ipa as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Soor-ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          if-no-files-found: warn
