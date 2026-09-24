@@ -1,0 +1,327 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		57B8F7846EEC42D98E5BF96C /* SoorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5574C8A37BB4F2F8FBFF08A /* SoorApp.swift */; };
+		CAE91EFBE07343E19205BA9A /* SoorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039B45D210AC4D48ABACAE41 /* SoorEngine.swift */; };
+		EE62EEC551E6468CA5F76FE9 /* Knowledge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B447B1CFB7384087938A627B /* Knowledge.swift */; };
+		CF8B255736D14DBE87D3F58E /* NetworkScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58DACF08548490FAEEA4FBB /* NetworkScanner.swift */; };
+		BF342D165AE04E13AFC5813A /* UPnPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CAD8E6732F3459AB10BCD25 /* UPnPClient.swift */; };
+		7FC5E1BA4624453ABE641C97 /* ScanCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FB973560A8443AA761D59E /* ScanCoordinator.swift */; };
+		78B332036DB94789A97B7DC5 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B264B269EC9F450988F626D7 /* Theme.swift */; };
+		7577F6FA98EA47AF92A1E398 /* ScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3916B804414D4D108A1C1022 /* ScanView.swift */; };
+		70AD806DC6A047EE84BE1E83 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D4E4029B49746F090BE510E /* Views.swift */; };
+		3CE686B3118C48448FC2F3D0 /* services.json in Resources */ = {isa = PBXBuildFile; fileRef = 8296F1BC0E88456D9E953430 /* services.json */; };
+		5CE66B71E4694AC2BFD4D310 /* cameras.json in Resources */ = {isa = PBXBuildFile; fileRef = B8060D89F71748188CB6B03D /* cameras.json */; };
+		F57E8ED3DB764F97ADF9E27A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8E2CED14791B44D785FDF78D /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		C5574C8A37BB4F2F8FBFF08A /* SoorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SoorApp.swift"; sourceTree = "<group>"; };
+		039B45D210AC4D48ABACAE41 /* SoorEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SoorEngine.swift"; sourceTree = "<group>"; };
+		B447B1CFB7384087938A627B /* Knowledge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Knowledge.swift"; sourceTree = "<group>"; };
+		E58DACF08548490FAEEA4FBB /* NetworkScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetworkScanner.swift"; sourceTree = "<group>"; };
+		5CAD8E6732F3459AB10BCD25 /* UPnPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UPnPClient.swift"; sourceTree = "<group>"; };
+		F8FB973560A8443AA761D59E /* ScanCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScanCoordinator.swift"; sourceTree = "<group>"; };
+		B264B269EC9F450988F626D7 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Theme.swift"; sourceTree = "<group>"; };
+		3916B804414D4D108A1C1022 /* ScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScanView.swift"; sourceTree = "<group>"; };
+		3D4E4029B49746F090BE510E /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views.swift"; sourceTree = "<group>"; };
+		8296F1BC0E88456D9E953430 /* services.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "services.json"; sourceTree = "<group>"; };
+		B8060D89F71748188CB6B03D /* cameras.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "cameras.json"; sourceTree = "<group>"; };
+		8E2CED14791B44D785FDF78D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets.xcassets"; sourceTree = "<group>"; };
+		B01716CFD14E4E808BC5576E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+		7FD440F9590246C5B46FD280 /* Soor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Soor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8959F069F788491EA8B45205 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		03C068850175415D80E0BA31 /*  */ = {
+			isa = PBXGroup;
+			children = (
+				2BA5D15D72F246A589D63E4F /* Soor */,
+				19981FCBF07F4E8197D8CBD0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		19981FCBF07F4E8197D8CBD0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7FD440F9590246C5B46FD280 /* Soor.app */,
+			);
+			name = "Products";
+			sourceTree = "<group>";
+		};
+		2BA5D15D72F246A589D63E4F /* Soor */ = {
+			isa = PBXGroup;
+			children = (
+				4358D1FC048841C1B26A036F /* Engine */,
+				2E7D53B937824703A2C87297 /* Scan */,
+				953A570E4BF04353BE701B5C /* UI */,
+				DC15DDEE497F410DA37CEEF7 /* Resources */,
+				C5574C8A37BB4F2F8FBFF08A /* SoorApp.swift */,
+				8E2CED14791B44D785FDF78D /* Assets.xcassets */,
+				B01716CFD14E4E808BC5576E /* Info.plist */,
+			);
+			name = "Soor";
+			path = "Soor";
+			sourceTree = "<group>";
+		};
+		4358D1FC048841C1B26A036F /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				039B45D210AC4D48ABACAE41 /* SoorEngine.swift */,
+				B447B1CFB7384087938A627B /* Knowledge.swift */,
+			);
+			name = "Engine";
+			path = "Engine";
+			sourceTree = "<group>";
+		};
+		2E7D53B937824703A2C87297 /* Scan */ = {
+			isa = PBXGroup;
+			children = (
+				E58DACF08548490FAEEA4FBB /* NetworkScanner.swift */,
+				5CAD8E6732F3459AB10BCD25 /* UPnPClient.swift */,
+				F8FB973560A8443AA761D59E /* ScanCoordinator.swift */,
+			);
+			name = "Scan";
+			path = "Scan";
+			sourceTree = "<group>";
+		};
+		953A570E4BF04353BE701B5C /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B264B269EC9F450988F626D7 /* Theme.swift */,
+				3916B804414D4D108A1C1022 /* ScanView.swift */,
+				3D4E4029B49746F090BE510E /* Views.swift */,
+			);
+			name = "UI";
+			path = "UI";
+			sourceTree = "<group>";
+		};
+		DC15DDEE497F410DA37CEEF7 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8296F1BC0E88456D9E953430 /* services.json */,
+				B8060D89F71748188CB6B03D /* cameras.json */,
+			);
+			name = "Resources";
+			path = "Resources";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2F2FA6EBA1F04FC5BA2FC1CB /* Soor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 792B50F053B0497EB4084A40 /* Build configuration list for PBXNativeTarget "Soor" */;
+			buildPhases = (
+				A11E15AA1B0745BEA91831D9 /* Sources */,
+				8959F069F788491EA8B45205 /* Frameworks */,
+				8F6B671DFDD94B85BA32C626 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Soor;
+			productName = Soor;
+			productReference = 7FD440F9590246C5B46FD280 /* Soor.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A186DAD01505497A86F06B1E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					2F2FA6EBA1F04FC5BA2FC1CB = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 656BF19B96D44758A3E32C3E /* Build configuration list for PBXProject "Soor" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = ar;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				ar,
+				en,
+				Base,
+			);
+			mainGroup = 03C068850175415D80E0BA31;
+			productRefGroup = 19981FCBF07F4E8197D8CBD0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2F2FA6EBA1F04FC5BA2FC1CB /* Soor */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8F6B671DFDD94B85BA32C626 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3CE686B3118C48448FC2F3D0 /* services.json in Resources */,
+				5CE66B71E4694AC2BFD4D310 /* cameras.json in Resources */,
+				F57E8ED3DB764F97ADF9E27A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A11E15AA1B0745BEA91831D9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				57B8F7846EEC42D98E5BF96C /* SoorApp.swift in Sources */,
+				CAE91EFBE07343E19205BA9A /* SoorEngine.swift in Sources */,
+				EE62EEC551E6468CA5F76FE9 /* Knowledge.swift in Sources */,
+				CF8B255736D14DBE87D3F58E /* NetworkScanner.swift in Sources */,
+				BF342D165AE04E13AFC5813A /* UPnPClient.swift in Sources */,
+				7FC5E1BA4624453ABE641C97 /* ScanCoordinator.swift in Sources */,
+				78B332036DB94789A97B7DC5 /* Theme.swift in Sources */,
+				7577F6FA98EA47AF92A1E398 /* ScanView.swift in Sources */,
+				70AD806DC6A047EE84BE1E83 /* Views.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		B2D1784A21134B7B99B1E12B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		1745323423034742A99FFA49 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0270FF3F95D144F0A6565335 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Soor/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				"IPHONEOS_DEPLOYMENT_TARGET" = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.eworldq8.soor";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		238057F04F0348F7A05F86DB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Soor/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				"IPHONEOS_DEPLOYMENT_TARGET" = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.eworldq8.soor";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		656BF19B96D44758A3E32C3E /* Build configuration list for PBXProject "Soor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B2D1784A21134B7B99B1E12B /* Debug */,
+				1745323423034742A99FFA49 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		792B50F053B0497EB4084A40 /* Build configuration list for PBXNativeTarget "Soor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0270FF3F95D144F0A6565335 /* Debug */,
+				238057F04F0348F7A05F86DB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A186DAD01505497A86F06B1E /* Project object */;
+}

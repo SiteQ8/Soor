@@ -51,9 +51,18 @@ docs/engine/   soor.js (analysis), report.js (bilingual wording)
 docs/data/     services.json, cameras.json
 docs/          the site served at soor.3li.info
 tests/         shared vectors and the Node runner
-ios/           the iOS app (Swift)
-android/       the Android app (Kotlin)
+ios/Soor/      the iOS app (SwiftUI, real on-device scan)
+ios/SoorEngine/  the engine as a SwiftPM package, tested against the shared vectors
+android/       the Android app (Kotlin), next
+tools/         check-sync.sh, the guard that keeps every engine copy identical
 ```
+
+The iOS app scans for real. It finds the phone's subnet, sweeps it for live
+hosts, probes common service ports and reads the banners they volunteer, and
+reads the router's UPnP port-forward table to tell an internet-exposed device
+from a safe local one. It tries no passwords and exploits nothing. The Swift
+engine is the JS engine ported line for line, and CI runs both against the same
+`tests/vectors.json`, so a finding is identical on every platform.
 
 ## Tests
 

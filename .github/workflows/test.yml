@@ -4,15 +4,39 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
-  engine:
+  engine-js:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Run engine tests
+      - name: JS engine tests
         run: node tests/run.js
-      - name: Run dedup tests
+      - name: JS dedup tests
         run: node tests/dedup.js
+      - name: Sync guard (engine + knowledge base identical across app, package, site)
+        run: bash tools/check-sync.sh
+
+  engine-swift:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift engine parity tests (shared vectors)
+        working-directory: ios/SoorEngine
+        run: swift test
+
+  ios-build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the iOS app
+        working-directory: ios/Soor
+        run: |
+          xcodebuild build \
+            -project Soor.xcodeproj \
+            -scheme Soor \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO

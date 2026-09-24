@@ -1,0 +1,166 @@
+{
+  "schema": "soor.cameras.v1",
+  "note": {
+    "ar": "بصمات الكاميرات وبيانات دخول المصنع المنشورة للعامة لكل طراز. تُستعمل للتحذير الدفاعي فقط: سور لا يجرّب هذه البيانات على أي جهاز، بل يقول لصاحب الكاميرا إن طرازه يُشحن ببيانات معروفة فليغيّرها.",
+    "en": "Camera fingerprints and the publicly documented factory login details per model. Used for defensive warning only: Soor never tries these on any device, it tells the camera owner that their model ships with known details so they change them."
+  },
+  "note_credentials": {
+    "ar": "قائمة بيانات المصنع منشورة على نطاق واسع وتستعملها محركات الفحص العامة. وجودها هنا للتوعية بضرورة تغييرها لا لاستعمالها.",
+    "en": "The factory-credential list is widely published and used by public scanning engines. It is here to raise awareness that they must be changed, not to be used."
+  },
+  "vendors": [
+    {
+      "id": "hikvision",
+      "name": "Hikvision",
+      "fingerprints": {
+        "http_server": ["App-webs", "DNVRS-Webs", "Hikvision"],
+        "http_title": ["", "Web Client"],
+        "rtsp_server": ["Hipcam", "Hikvision"],
+        "banner": ["Hikvision"]
+      },
+      "default_credentials": [
+        { "user": "admin", "pass": "12345" },
+        { "user": "admin", "pass": "(set on first boot)" }
+      ],
+      "first_boot_password": true,
+      "notes": {
+        "ar": "الطُّرز الأحدث تطلب ضبط كلمة مرور عند أول تشغيل، والأقدم تُشحن بكلمة 12345. إن لم تضبط كلمة المرور فالكاميرا مكشوفة.",
+        "en": "Newer models require setting a password on first boot; older ones ship with 12345. If the password was never set, the camera is exposed."
+      }
+    },
+    {
+      "id": "dahua",
+      "name": "Dahua",
+      "fingerprints": {
+        "http_server": ["Dahua"],
+        "http_title": ["Dahua"],
+        "rtsp_server": ["Dahua"],
+        "banner": ["Dahua"]
+      },
+      "default_credentials": [
+        { "user": "admin", "pass": "admin" },
+        { "user": "888888", "pass": "888888" },
+        { "user": "666666", "pass": "666666" }
+      ],
+      "first_boot_password": true,
+      "notes": {
+        "ar": "بيانات مصنع معروفة منها admin/admin و888888. الطُّرز الأحدث تفرض تغييرها عند أول تشغيل.",
+        "en": "Known factory details include admin/admin and 888888. Newer models force a change on first boot."
+      }
+    },
+    {
+      "id": "axis",
+      "name": "Axis",
+      "fingerprints": {
+        "http_server": ["Boa", "Axis"],
+        "http_title": ["Axis", "Live View"],
+        "rtsp_server": ["Axis"],
+        "banner": ["Axis"]
+      },
+      "default_credentials": [
+        { "user": "root", "pass": "(set on first boot)" }
+      ],
+      "first_boot_password": true,
+      "notes": {
+        "ar": "تطلب ضبط كلمة مرور المستخدم root عند أول تشغيل. الخطر إن تُركت بلا ضبط.",
+        "en": "Requires setting the root password on first boot. The risk is if it was left unset."
+      }
+    },
+    {
+      "id": "foscam",
+      "name": "Foscam",
+      "fingerprints": {
+        "http_server": ["Foscam", "Netwave"],
+        "http_title": ["Foscam", "IPCam"],
+        "rtsp_server": ["Foscam"],
+        "banner": ["Foscam"]
+      },
+      "default_credentials": [
+        { "user": "admin", "pass": "" },
+        { "user": "admin", "pass": "admin" }
+      ],
+      "first_boot_password": false,
+      "notes": {
+        "ar": "كثير من طُرزها يُشحن بكلمة مرور فارغة للمستخدم admin، وهذا من أخطر الإعدادات.",
+        "en": "Many of its models ship with an empty password for the admin user, one of the most dangerous settings."
+      }
+    },
+    {
+      "id": "reolink",
+      "name": "Reolink",
+      "fingerprints": {
+        "http_server": ["Reolink", "nginx"],
+        "http_title": ["Reolink"],
+        "rtsp_server": ["Reolink"],
+        "banner": ["Reolink"]
+      },
+      "default_credentials": [
+        { "user": "admin", "pass": "" },
+        { "user": "admin", "pass": "(set on first boot)" }
+      ],
+      "first_boot_password": true,
+      "notes": {
+        "ar": "الطُّرز الأحدث تطلب كلمة مرور عند الإعداد، والأقدم تبدأ بكلمة فارغة للمستخدم admin.",
+        "en": "Newer models ask for a password during setup; older ones start with an empty password for admin."
+      }
+    },
+    {
+      "id": "tplink-tapo",
+      "name": "TP-Link Tapo / Kasa",
+      "fingerprints": {
+        "http_server": ["TP-LINK", "Tapo", "Kasa"],
+        "http_title": ["TP-LINK", "Tapo"],
+        "rtsp_server": ["TP-LINK"],
+        "banner": ["Tapo", "TP-LINK"]
+      },
+      "default_credentials": [
+        { "user": "(account based)", "pass": "(account based)" }
+      ],
+      "first_boot_password": true,
+      "notes": {
+        "ar": "تعتمد على حساب المستخدم لا على كلمة مصنع ثابتة، لكن بث RTSP فيها قد يُفعّل بحساب كاميرا منفصل ضعيف.",
+        "en": "Uses a user account rather than a fixed factory password, but its RTSP stream may be enabled with a separate weak camera account."
+      }
+    },
+    {
+      "id": "xiongmai",
+      "name": "Xiongmai / generic (XM)",
+      "fingerprints": {
+        "http_server": ["uc-httpd", "JAWS"],
+        "http_title": ["NETSurveillance"],
+        "rtsp_server": ["H264DVR"],
+        "banner": ["uc-httpd", "NETSurveillance"]
+      },
+      "default_credentials": [
+        { "user": "admin", "pass": "" },
+        { "user": "default", "pass": "tluafed" }
+      ],
+      "first_boot_password": false,
+      "notes": {
+        "ar": "شرائح مستعملة في كثير من الكاميرات مجهولة العلامة، بكلمة مرور فارغة أو ثابتة، وهي من أكثر ما يظهر في محركات الفحص العامة.",
+        "en": "Chipsets used in many unbranded cameras, with an empty or fixed password, among the most common devices seen on public scanning engines."
+      }
+    },
+    {
+      "id": "generic-ipcam",
+      "name": "Generic IP camera",
+      "fingerprints": {
+        "http_server": ["GoAhead-Webs", "thttpd"],
+        "http_title": ["IP Camera", "NETWAVE", "webcam"],
+        "rtsp_server": ["IPCamera"],
+        "banner": ["IP Camera"]
+      },
+      "default_credentials": [
+        { "user": "admin", "pass": "admin" },
+        { "user": "admin", "pass": "" },
+        { "user": "admin", "pass": "888888" },
+        { "user": "admin", "pass": "123456" }
+      ],
+      "first_boot_password": false,
+      "notes": {
+        "ar": "كاميرات عامة بخوادم ويب معروفة الضعف وبيانات مصنع شائعة. إن كانت مكشوفة للإنترنت فاعتبرها معرّضة حتى تغيّر كلمة مرورها.",
+        "en": "Generic cameras with known weak web servers and common factory details. If exposed to the internet, treat them as at risk until you change their password."
+      }
+    }
+  ]
+}

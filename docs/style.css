@@ -1,19 +1,25 @@
 /*
   Soor site styles.
-  Direction: a network instrument. A dark console field, a warm signal amber, and
-  findings that read like readings off a panel. Layout uses logical properties so
-  Arabic (default) and English share one sheet.
+  Identity: Kuwait navy (#0033A0) rampart with a warm gold signal. A dark
+  console field with navy structure, findings read like readings off a panel.
+  Layout uses logical properties so Arabic (default) and English share one sheet.
 */
 
 :root {
-  --bg: #0B1418;
-  --bg-2: #101E24;
-  --panel: #13252C;
-  --ink: #E6F0F0;
-  --ink-2: #9FB6B8;
-  --rule: #23414A;
-  --line: #35C3C0;
-  --line-soft: rgba(53, 195, 192, 0.12);
+  --navy: #0033A0;
+  --navy-lite: #4C70BC;
+  --navy-pale: #8CA3D4;
+  --navy-deep: #002168;
+  --navy-ink: #001748;
+
+  --bg: #05060E;
+  --bg-2: #0A1024;
+  --panel: #0F1730;
+  --ink: #EAF0FB;
+  --ink-2: #A7B4D4;
+  --rule: #23305A;
+  --line: #4C70BC;
+  --line-soft: rgba(76, 112, 188, 0.16);
   --signal: #E8A13A;
   --crit: #FF6B5B;
   --crit-bg: #33120F;
@@ -23,10 +29,11 @@
   --med-bg: #2E280C;
   --ok: #52C48D;
   --ok-bg: #0F2E1F;
-  --info: #6FB4D8;
-  --info-bg: #0E2530;
+  --info: #6FA8E8;
+  --info-bg: #0E2036;
 
   --text: "Readex Pro", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif;
+  --display: "Readex Pro", "Noto Kufi Arabic", var(--text);
   --mono: "IBM Plex Mono", "Cascadia Code", ui-monospace, monospace;
   --measure: 70ch;
   --gutter: clamp(18px, 4vw, 44px);
@@ -37,14 +44,14 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #EDF3F3;
-    --bg-2: #F6FAFA;
+    --bg: #EEF2FB;
+    --bg-2: #F6F8FE;
     --panel: #FFFFFF;
-    --ink: #0C1D22;
-    --ink-2: #48636A;
-    --rule: #CFDEDE;
-    --line: #12817E;
-    --line-soft: rgba(18, 129, 126, 0.10);
+    --ink: #0A1024;
+    --ink-2: #4A5578;
+    --rule: #D3DBEF;
+    --line: #0033A0;
+    --line-soft: rgba(0, 51, 160, 0.09);
     --signal: #B26B12;
     --crit: #C0362B;
     --crit-bg: #FBE9E7;
@@ -54,8 +61,8 @@
     --med-bg: #FAF3D8;
     --ok: #12703F;
     --ok-bg: #E1F2E8;
-    --info: #226C8B;
-    --info-bg: #E4F1F6;
+    --info: #1F5D9E;
+    --info-bg: #E4EDFA;
   }
 }
 
@@ -74,7 +81,8 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(120% 60% at 100% 0%, var(--line-soft), transparent 60%),
+    radial-gradient(130% 70% at 100% 0%, rgba(30,79,192,0.18), transparent 55%),
+    radial-gradient(90% 50% at 0% 0%, rgba(0,51,160,0.10), transparent 50%),
     var(--bg);
   color: var(--ink);
   font-family: var(--text);
@@ -97,9 +105,9 @@ a:hover { color: var(--signal); }
   backdrop-filter: blur(10px);
   border-block-end: 1px solid var(--rule);
 }
-.bar .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: 0.02em; }
-.bar .brand svg { inline-size: 26px; block-size: 26px; }
-.bar .brand b { font-size: 1.15rem; }
+.bar .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: 0.01em; }
+.bar .brand img { inline-size: 30px; block-size: 30px; }
+.bar .brand b { font-size: 1.2rem; font-family: var(--display); }
 .bar .spacer { flex: 1; }
 .bar nav { display: flex; gap: 4px; }
 .bar nav a {
@@ -121,8 +129,9 @@ section { margin-block: clamp(48px, 8vw, 88px); }
 h1 {
   font-size: clamp(2rem, 6vw, 3.4rem);
   line-height: 1.15; margin: 0 0 0.5em; letter-spacing: -0.01em;
-  font-weight: 700;
+  font-weight: 700; font-family: var(--display);
 }
+.hero .logo-lg { inline-size: clamp(76px, 12vw, 108px); block-size: auto; margin-block-end: 18px; filter: drop-shadow(0 10px 30px rgba(0,51,160,0.35)); }
 h2 {
   font-size: clamp(1.4rem, 3.4vw, 2rem);
   margin: 0 0 0.6em; letter-spacing: -0.005em; font-weight: 650;

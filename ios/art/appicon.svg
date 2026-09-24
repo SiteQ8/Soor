@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A45C0"/>
+      <stop offset="0.55" stop-color="#0033A0"/>
+      <stop offset="1" stop-color="#001748"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.46" r="0.55">
+      <stop offset="0" stop-color="#F2C879" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#E8A13A" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#E8A13A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- merlons: a rampart silhouette across the top -->
+  <g fill="#001748" opacity="0.45">
+    <rect x="196" y="150" width="92" height="70"/>
+    <rect x="360" y="150" width="92" height="70"/>
+    <rect x="524" y="150" width="92" height="70"/>
+    <rect x="688" y="150" width="92" height="70"/>
+  </g>
+  <circle cx="512" cy="486" r="290" fill="url(#glow)"/>
+  <!-- network mesh -->
+  <g stroke="#DCE6FA" stroke-width="16" fill="none" stroke-linecap="round">
+    <line x1="512" y1="300" x2="330" y2="486"/>
+    <line x1="512" y1="300" x2="694" y2="486"/>
+    <line x1="330" y1="486" x2="512" y2="672"/>
+    <line x1="694" y1="486" x2="512" y2="672"/>
+    <line x1="330" y1="486" x2="694" y2="486"/>
+    <line x1="512" y1="300" x2="512" y2="672"/>
+  </g>
+  <g fill="#FFFFFF" stroke="#0033A0" stroke-width="9">
+    <circle cx="512" cy="300" r="40"/>
+    <circle cx="330" cy="486" r="40"/>
+    <circle cx="694" cy="486" r="40"/>
+    <circle cx="512" cy="672" r="40"/>
+  </g>
+  <circle cx="512" cy="486" r="36" fill="#E8A13A" stroke="#FFFFFF" stroke-width="9"/>
+</svg>

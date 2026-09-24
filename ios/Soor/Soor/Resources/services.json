@@ -1,0 +1,196 @@
+{
+  "schema": "soor.services.v1",
+  "note": {
+    "ar": "قاعدة معرفة المنافذ والخدمات. تُشحن داخل التطبيق ولا تحتاج اتصالًا.",
+    "en": "Port and service knowledge base. Shipped inside the app; needs no connection."
+  },
+  "services": [
+    {
+      "id": "rtsp",
+      "ports": [554, 8554],
+      "proto": "tcp",
+      "match": ["RTSP/1.0", "RTSP/2.0", "Server: GStreamer"],
+      "category": "camera",
+      "severity": "high",
+      "name": { "ar": "بث كاميرا RTSP", "en": "RTSP camera stream" },
+      "what": {
+        "ar": "منفذ بث فيديو تستعمله كاميرات المراقبة. إن قبل البث دون كلمة مرور، شاهد أي أحد الكاميرا مباشرة.",
+        "en": "A video streaming port used by surveillance cameras. If it serves without a password, anyone can watch the camera live."
+      },
+      "fix": {
+        "ar": "فعّل المصادقة على الكاميرا وغيّر كلمة مرور المصنع، وأبقِ منفذها داخل الشبكة ولا تمرّره إلى الإنترنت.",
+        "en": "Turn on authentication on the camera and change the factory password, and keep its port on the local network rather than forwarded to the internet."
+      }
+    },
+    {
+      "id": "onvif",
+      "ports": [2020, 8000, 8899],
+      "proto": "tcp",
+      "match": ["ONVIF", "onvif"],
+      "category": "camera",
+      "severity": "high",
+      "name": { "ar": "خدمة كاميرا ONVIF", "en": "ONVIF camera service" },
+      "what": {
+        "ar": "بروتوكول تحكم في الكاميرات. يكشف طراز الكاميرا وإعداداتها، وكثيرًا ما يقبل بيانات دخول المصنع.",
+        "en": "A camera control protocol. It reveals the camera model and settings, and often accepts factory login details."
+      },
+      "fix": {
+        "ar": "غيّر كلمة مرور الكاميرا وأغلق ONVIF إن لم تستعمله، وأبقِه داخل الشبكة.",
+        "en": "Change the camera password and disable ONVIF if you do not use it, and keep it on the local network."
+      }
+    },
+    {
+      "id": "adb",
+      "ports": [5555],
+      "proto": "tcp",
+      "match": ["ADB", "host:"],
+      "category": "androidbox",
+      "severity": "critical",
+      "name": { "ar": "منفذ تصحيح أخطاء أندرويد", "en": "Android debug bridge" },
+      "what": {
+        "ar": "منفذ تصحيح أخطاء مفتوح في جهاز أندرويد، مثل صناديق البث. من يصل إليه يثبّت تطبيقات ويتحكم بالجهاز بالكامل دون كلمة مرور.",
+        "en": "An open debug port on an Android device such as a streaming box. Whoever reaches it can install apps and fully control the device with no password."
+      },
+      "fix": {
+        "ar": "أطفئ تصحيح الأخطاء عبر الشبكة في إعدادات الجهاز، وإن كان صندوق بث مجهول العلامة ففكّر في استبداله.",
+        "en": "Turn off network debugging in the device settings, and if it is an unbranded streaming box, consider replacing it."
+      }
+    },
+    {
+      "id": "telnet",
+      "ports": [23, 2323],
+      "proto": "tcp",
+      "match": ["login:", "Password:", "BusyBox", "Welcome to"],
+      "category": "console",
+      "severity": "critical",
+      "name": { "ar": "طرفية Telnet مكشوفة", "en": "Exposed Telnet console" },
+      "what": {
+        "ar": "طرفية تحكم قديمة تنقل كل شيء دون تشفير، بما فيه كلمة المرور. كثير من أجهزة إنترنت الأشياء تتركها مفتوحة بكلمة مرور مصنع.",
+        "en": "An old control console that sends everything unencrypted, including the password. Many IoT devices leave it open with a factory password."
+      },
+      "fix": {
+        "ar": "أطفئ Telnet في الجهاز واستعمل SSH بدلًا منه إن توفّر، وغيّر كلمة مرور المصنع.",
+        "en": "Turn off Telnet on the device and use SSH instead if available, and change the factory password."
+      }
+    },
+    {
+      "id": "http-admin",
+      "ports": [80, 8080, 81, 8081],
+      "proto": "tcp",
+      "match": ["Server: ", "WWW-Authenticate", "<title>", "Basic realm"],
+      "category": "router",
+      "severity": "medium",
+      "name": { "ar": "لوحة إدارة عبر HTTP", "en": "Admin panel over HTTP" },
+      "what": {
+        "ar": "لوحة إدارة تُفتح دون تشفير، فتُقرأ كلمة المرور في الطريق. تظهر في الراوترات وأجهزة التخزين والكاميرات.",
+        "en": "An admin panel served without encryption, so the password can be read in transit. Seen on routers, storage devices, and cameras."
+      },
+      "fix": {
+        "ar": "ادخل اللوحة عبر HTTPS إن توفّر، وغيّر كلمة مرور المصنع، ولا تمرّر المنفذ إلى الإنترنت.",
+        "en": "Reach the panel over HTTPS if available, change the factory password, and do not forward the port to the internet."
+      }
+    },
+    {
+      "id": "https-selfsigned",
+      "ports": [443, 8443],
+      "proto": "tcp",
+      "match": ["self-signed", "self signed"],
+      "category": "router",
+      "severity": "low",
+      "name": { "ar": "شهادة ذاتية التوقيع", "en": "Self-signed certificate" },
+      "what": {
+        "ar": "الخدمة مشفّرة لكن بشهادة تصدرها هي لنفسها، فلا جهة تضمن هويتها. مقبولة داخل الشبكة، وعلامة تنبيه إن كانت مكشوفة للإنترنت.",
+        "en": "The service is encrypted but with a certificate it issued to itself, so no authority vouches for its identity. Acceptable on the local network, a warning sign if it is exposed to the internet."
+      },
+      "fix": {
+        "ar": "لا بأس بها داخل الشبكة، لكن لا تمرّر المنفذ إلى الإنترنت.",
+        "en": "It is fine on the local network, but do not forward the port to the internet."
+      }
+    },
+    {
+      "id": "smb",
+      "ports": [445, 139],
+      "proto": "tcp",
+      "match": ["SMB", "netbios", "Samba"],
+      "category": "fileshare",
+      "severity": "high",
+      "name": { "ar": "مشاركة ملفات SMB", "en": "SMB file sharing" },
+      "what": {
+        "ar": "خدمة مشاركة ملفات. إن سمحت بالوصول دون كلمة مرور، قرأ من على الشبكة ملفاتك أو كتب عليها، وقد استُغلّت في هجمات فدية معروفة.",
+        "en": "A file-sharing service. If it allows access without a password, anyone on the network can read or write your files, and it has been used in well-known ransomware attacks."
+      },
+      "fix": {
+        "ar": "اشترط كلمة مرور على المشاركة وأوقف الوصول المجهول، ولا تمرّر المنفذ إلى الإنترنت أبدًا.",
+        "en": "Require a password on the share and disable anonymous access, and never forward the port to the internet."
+      }
+    },
+    {
+      "id": "ftp",
+      "ports": [21],
+      "proto": "tcp",
+      "match": ["220 ", "FTP", "vsftpd", "FileZilla"],
+      "category": "fileshare",
+      "severity": "medium",
+      "name": { "ar": "خدمة نقل ملفات FTP", "en": "FTP file transfer" },
+      "what": {
+        "ar": "خدمة نقل ملفات قديمة تنقل كلمة المرور دون تشفير، وكثيرًا ما تسمح بدخول مجهول.",
+        "en": "An old file-transfer service that sends the password unencrypted, and often allows anonymous login."
+      },
+      "fix": {
+        "ar": "أوقف الدخول المجهول واستعمل SFTP بدلًا منه، ولا تمرّر المنفذ إلى الإنترنت.",
+        "en": "Disable anonymous login and use SFTP instead, and do not forward the port to the internet."
+      }
+    },
+    {
+      "id": "rdp",
+      "ports": [3389],
+      "proto": "tcp",
+      "match": ["RDP", "ms-wbt"],
+      "category": "remote",
+      "severity": "high",
+      "name": { "ar": "سطح مكتب بعيد RDP", "en": "Remote desktop (RDP)" },
+      "what": {
+        "ar": "خدمة تحكم كامل بجهاز ويندوز عن بُعد. إن كانت مكشوفة للإنترنت صارت هدفًا مباشرًا لهجمات تخمين كلمة المرور.",
+        "en": "A service for full remote control of a Windows machine. If exposed to the internet, it becomes a direct target for password-guessing attacks."
+      },
+      "fix": {
+        "ar": "لا تمرّر منفذ RDP إلى الإنترنت، واستعمل شبكة خاصة افتراضية للوصول عن بُعد.",
+        "en": "Do not forward the RDP port to the internet, and use a VPN for remote access."
+      }
+    },
+    {
+      "id": "ssh",
+      "ports": [22],
+      "proto": "tcp",
+      "match": ["SSH-2.0", "SSH-1", "OpenSSH", "Dropbear"],
+      "category": "remote",
+      "severity": "low",
+      "name": { "ar": "دخول آمن SSH", "en": "Secure shell (SSH)" },
+      "what": {
+        "ar": "خدمة تحكم مشفّرة. آمنة بطبيعتها، لكنها هدف لتخمين كلمة المرور إن كانت مكشوفة للإنترنت بكلمة مرور ضعيفة.",
+        "en": "An encrypted control service. Safe by nature, but a target for password guessing if exposed to the internet with a weak password."
+      },
+      "fix": {
+        "ar": "استعمل مفتاحًا بدل كلمة المرور إن أمكن، ولا تمرّر المنفذ إلى الإنترنت ما لم تحتج ذلك.",
+        "en": "Use a key instead of a password where possible, and do not forward the port to the internet unless you need to."
+      }
+    },
+    {
+      "id": "upnp",
+      "ports": [1900, 5000],
+      "proto": "tcp",
+      "match": ["UPnP", "rootDevice", "IGD"],
+      "category": "router",
+      "severity": "high",
+      "name": { "ar": "خدمة UPnP في الراوتر", "en": "UPnP on the router" },
+      "what": {
+        "ar": "خاصية تسمح للأجهزة داخل البيت بفتح منافذ في الراوتر إلى الإنترنت دون علمك، وهي السبب الأكثر شيوعًا لظهور الكاميرات والأجهزة على محركات الفحص العامة.",
+        "en": "A feature that lets devices inside the home open ports on the router to the internet without your knowledge, and the most common reason cameras and devices show up on public scanning engines."
+      },
+      "fix": {
+        "ar": "أطفئ UPnP في إعدادات الراوتر ما لم تحتجه، وافحص قائمة المنافذ الممرَّرة وأغلق ما لا تعرفه.",
+        "en": "Turn off UPnP in the router settings unless you need it, and review the list of forwarded ports and close any you do not recognise."
+      }
+    }
+  ]
+}
