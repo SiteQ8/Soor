@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سُور | فاحص أمان شبكة البيت</title>
+<meta name="description" content="سُور تطبيق يفحص شبكة بيتك ويكشف الأجهزة المكشوفة والكاميرات ذات كلمة مرور المصنع قبل أن تجدها محركات الفحص العامة. يعمل على الجهاز دون جمع بيانات.">
+<meta name="author" content="Ali AlEnezi">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0B1418" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EDF3F3" media="(prefers-color-scheme: light)">
+<link rel="canonical" href="https://soor.3li.info/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Soor">
+<meta property="og:title" content="سُور | Soor">
+<meta property="og:description" content="A home network scanner that finds exposed devices and factory-password cameras before public scanning engines do. Runs on the device, collects nothing.">
+<meta property="og:url" content="https://soor.3li.info/">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="bar">
+  <span class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4 56 13v18c0 15-10 25-24 29C18 56 8 46 8 31V13z" fill="none" stroke="#35C3C0" stroke-width="3" stroke-linejoin="round"/><g stroke="#35C3C0" stroke-width="2.2" fill="#35C3C0"><line x1="32" y1="20" x2="20" y2="34"/><line x1="32" y1="20" x2="44" y2="34"/><line x1="20" y1="34" x2="32" y2="46"/><line x1="44" y1="34" x2="32" y2="46"/><line x1="20" y1="34" x2="44" y2="34"/><circle cx="32" cy="20" r="3.4"/><circle cx="20" cy="34" r="3.4"/><circle cx="44" cy="34" r="3.4"/><circle cx="32" cy="46" r="3.4"/></g></svg>
+    <b>سُور</b>
+  </span>
+  <span class="spacer"></span>
+  <nav>
+    <a href="#demo"><span class="ar">جرّبه</span><span class="en">Demo</span></a>
+    <a href="#how"><span class="ar">كيف يعمل</span><span class="en">How</span></a>
+    <a href="#camera"><span class="ar">الكاميرات</span><span class="en">Cameras</span></a>
+    <a href="#privacy"><span class="ar">الخصوصية</span><span class="en">Privacy</span></a>
+  </nav>
+  <button class="langtoggle" id="lang" type="button">English</button>
+</header>
+
+<section class="hero">
+  <main style="margin-block:0">
+    <span class="tag">SiteQ8 · open source</span>
+    <div class="ar">
+      <h1>سُور يفحص شبكة بيتك كما يفحصها المختبِر</h1>
+      <p class="lede">يكشف الأجهزة المتصلة بشبكتك وما تفتحه من منافذ خطرة، ويحذّرك من الكاميرا التي ما زالت على كلمة مرور المصنع ومنفذها مفتوح إلى الإنترنت، قبل أن تجدها محركات الفحص العامة. يعمل داخل هاتفك، بلا حساب ولا خادم ولا جمع بيانات.</p>
+    </div>
+    <div class="en">
+      <h1>Soor scans your home network the way a tester would</h1>
+      <p class="lede">It finds the devices on your network and the risky ports they leave open, and warns you about the camera still on its factory password with its port open to the internet, before public scanning engines find it. It runs inside your phone, with no account, no server, and no data collection.</p>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#demo"><span class="ar">شاهد نتيجة فحص</span><span class="en">See a scan result</span></a>
+      <a class="btn" href="https://github.com/SiteQ8/Soor"><span class="ar">الشيفرة المصدرية</span><span class="en">Source code</span></a>
+    </div>
+  </main>
+</section>
+
+<main>
+
+<section id="what">
+  <div class="ar"><h2>ماذا يكشف</h2></div>
+  <div class="en"><h2>What it finds</h2></div>
+  <div class="grid">
+    <div class="card">
+      <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/></svg><span class="ar">الكاميرات المكشوفة</span><span class="en">Exposed cameras</span></h3>
+      <p class="ar">كاميرا على كلمة مرور المصنع ومنفذها مرّره الراوتر إلى الإنترنت، وهي الحالة التي تظهر في محركات الفحص العامة.</p>
+      <p class="en">A camera on its factory password with its port forwarded to the internet by the router, the case that shows up on public scanning engines.</p>
+    </div>
+    <div class="card">
+      <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg><span class="ar">المنافذ الخطرة</span><span class="en">Risky ports</span></h3>
+      <p class="ar">تحكم عن بُعد مكشوف، منفذ تصحيح أخطاء في صناديق أندرويد، مشاركة ملفات مفتوحة، لوحة إدارة بلا تشفير.</p>
+      <p class="en">Exposed remote control, a debug port on Android boxes, open file shares, an admin panel with no encryption.</p>
+    </div>
+    <div class="card">
+      <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg><span class="ar">إعدادات الراوتر</span><span class="en">Router settings</span></h3>
+      <p class="ar">خاصية UPnP التي تفتح منافذ إلى الإنترنت دون علمك، ولوحة إدارة بلا تشفير.</p>
+      <p class="en">The UPnP feature that opens ports to the internet without your knowledge, and an admin panel with no encryption.</p>
+    </div>
+    <div class="card">
+      <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"/></svg><span class="ar">الأجهزة الجديدة</span><span class="en">New devices</span></h3>
+      <p class="ar">جهاز ظهر على شبكتك لأول مرة، لتتأكد أنك تعرفه.</p>
+      <p class="en">A device seen on your network for the first time, so you can be sure you recognise it.</p>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="ar">
+    <h2>جرّبه</h2>
+    <p class="muted">صفحة الويب لا تفحص شبكتك، لكنها تشغّل محرك سُور نفسه على نتائج فحص واقعية لتريك ما يعرضه التطبيق تمامًا. اختر مشهدًا.</p>
+  </div>
+  <div class="en">
+    <h2>Try it</h2>
+    <p class="muted">A web page cannot scan your network, but it runs the same Soor engine on realistic scan results to show you exactly what the app displays. Pick a scenario.</p>
+  </div>
+
+  <div class="console">
+    <div class="head">
+      <span class="dot live"></span>
+      <span class="mono">soor · engine demo</span>
+    </div>
+    <div class="controls" id="scenarios"></div>
+    <div class="summary" id="summary"></div>
+    <div class="body" id="findings"></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="ar"><h2>كيف يعمل</h2></div>
+  <div class="en"><h2>How it works</h2></div>
+  <div class="steps">
+    <div class="step"><span class="n"></span><div>
+      <div class="ar"><h3>يرسم شبكتك</h3><p>يجد الأجهزة المتصلة بشبكتك ويقرأ ما تعلنه من منافذ وخدمات، دون أن يجرب كلمة مرور أو يستغل ثغرة. يطرق الأبواب فقط.</p></div>
+      <div class="en"><h3>Maps your network</h3><p>It finds the connected devices and reads the ports and services they announce, without trying a password or exploiting a flaw. It only knocks on doors.</p></div>
+    </div></div>
+    <div class="step"><span class="n"></span><div>
+      <div class="ar"><h3>يتعرّف ويقيّم</h3><p>يطابق كل جهاز بقاعدة معرفة محمولة داخله، فيعرف طُرز الكاميرات المعروفة بكلمة مرور المصنع، والمنافذ التي لا ينبغي أن تكون مفتوحة.</p></div>
+      <div class="en"><h3>Identifies and judges</h3><p>It matches each device against a knowledge base carried inside it, so it knows the camera models known for factory passwords and the ports that should not be open.</p></div>
+    </div></div>
+    <div class="step"><span class="n"></span><div>
+      <div class="ar"><h3>يفحص الراوتر</h3><p>يقرأ جدول المنافذ الممرَّرة إلى الإنترنت في الراوتر، فيميّز الجهاز المكشوف للخارج من الجهاز الآمن داخل الشبكة.</p></div>
+      <div class="en"><h3>Checks the router</h3><p>It reads the router's table of ports forwarded to the internet, telling a device exposed to the outside from a safe device inside the network.</p></div>
+    </div></div>
+    <div class="step"><span class="n"></span><div>
+      <div class="ar"><h3>يشرح ويصلح</h3><p>يحوّل كل اكتشاف إلى جملة يفهمها غير المختص مع خطوة إصلاح واضحة، بالعربية والإنجليزية. أنت وحدك من يرسل التقرير إن أردت مشاركته.</p></div>
+      <div class="en"><h3>Explains and fixes</h3><p>It turns each finding into a sentence a non-specialist understands with a clear fix, in Arabic and English. You alone send the report if you choose to share it.</p></div>
+    </div></div>
+  </div>
+</section>
+
+<section id="camera">
+  <div class="ar">
+    <h2>الكاميرات وكلمة مرور المصنع</h2>
+    <p>الكاميرا تظهر في محركات الفحص العامة لسببين مترابطين: أن الراوتر مرّر منفذها إلى الإنترنت، وأنها ما زالت على كلمة مرور المصنع. سُور يعالج السببين معًا من داخل الشبكة قبل أن يجدها الماسح الخارجي.</p>
+    <p>سُور لا يجرّب كلمة مرور على أي كاميرا، لأن هذا يجعله أداة هجوم. بدلًا من ذلك يكشف الضعف بثلاث طرق دفاعية: يقرأ جدول UPnP في الراوتر ليعرف إن كان منفذ الكاميرا مفتوحًا إلى الإنترنت، ويتعرّف على طراز الكاميرا فيقول لك إن هذا الطراز يُشحن ببيانات دخول معروفة للعامة، ويقرأ صفحة دخولها إن أعلنت أنها بلا كلمة مرور أو قبلت البث دون مصادقة.</p>
+    <p class="muted">القائمة نفسها من بيانات المصنع هي ما تستعمله محركات الفحص، ووجودها في المشروع للتوعية بضرورة تغييرها لا لاستعمالها.</p>
+  </div>
+  <div class="en">
+    <h2>Cameras and the factory password</h2>
+    <p>A camera appears on public scanning engines for two linked reasons: the router forwarded its port to the internet, and it is still on its factory password. Soor addresses both from inside the network before an outside scanner finds it.</p>
+    <p>Soor never tries a password on any camera, because that would make it an attack tool. Instead it detects the weakness three defensive ways: it reads the router's UPnP table to see whether the camera's port is open to the internet, it identifies the camera model and tells you that model ships with publicly known login details, and it reads the login page when it announces it has no password set or serves the stream without authentication.</p>
+    <p class="muted">The same factory-credential list is what scanning engines use; it is in the project to raise awareness that they must be changed, not to be used.</p>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="privacy">
+    <div class="ar">
+      <h2>لا يجمع بياناتك</h2>
+      <p>سُور يعمل داخل هاتفك بالكامل. لا حساب، ولا خادم لنا، ولا يخرج بشيء عنك. معرفته كلها مشحونة داخله. نسخة الأندرويد لا تطلب إذن الإنترنت أصلًا، فلا تستطيع أن ترسل شيئًا حتى لو أرادت، وهذا مفروض ببنية التطبيق لا بوعد في سياسة الخصوصية، ويمكنك التحقق منه بنفسك في الشيفرة المفتوحة.</p>
+    </div>
+    <div class="en">
+      <h2>It collects nothing</h2>
+      <p>Soor runs entirely inside your phone. No account, no server of ours, and it takes nothing about you out. All its knowledge is shipped inside it. The Android version does not even request internet permission, so it cannot send anything even if it wanted to, and this is enforced by the app's structure rather than promised in a privacy policy, and you can verify it yourself in the open source.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span class="ar">سُور &mdash; مشروع مفتوح المصدر من SiteQ8</span>
+  <span class="en">Soor &mdash; an open source project by SiteQ8</span>
+  <span class="spacer"></span>
+  <a href="https://github.com/SiteQ8/Soor"><span class="ar">GitHub</span><span class="en">GitHub</span></a>
+</footer>
+
+<script src="engine/soor.js"></script>
+<script src="engine/report.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

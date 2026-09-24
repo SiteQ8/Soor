@@ -1,0 +1,118 @@
+{
+  "schema": "soor.vectors.v1",
+  "note": "One set of scan observations and the finding each must produce. The JS, Swift and Kotlin engines all run these; a finding that differs between engines fails the build.",
+  "cases": [
+    {
+      "name": "hikvision camera, factory password, forwarded to internet",
+      "observation": {
+        "host": "192.168.1.64", "port": 554, "proto": "tcp",
+        "rtspServer": "Hipcam RealServer/V1.0", "noAuth": true, "internetExposed": true
+      },
+      "expect": { "kind": "exposed-camera-default", "severity": "critical", "vendor": "hikvision", "exposed": true }
+    },
+    {
+      "name": "xiongmai generic camera, empty password, on local network only",
+      "observation": {
+        "host": "192.168.1.70", "port": 34567, "proto": "tcp",
+        "httpServer": "uc-httpd 1.0.0", "httpTitle": "NETSurveillance WEB", "noAuth": true, "internetExposed": false
+      },
+      "expect": { "kind": "default-credentials", "severity": "high", "vendor": "xiongmai", "exposed": false }
+    },
+    {
+      "name": "dahua camera on local network, known factory creds, not exposed",
+      "observation": {
+        "host": "192.168.1.65", "port": 80, "proto": "tcp",
+        "httpServer": "Webs", "httpTitle": "WEB SERVICE", "banner": "Dahua", "internetExposed": false
+      },
+      "expect": { "kind": "default-credentials", "severity": "high", "vendor": "dahua", "exposed": false }
+    },
+    {
+      "name": "android box with open adb, not exposed but critical anyway",
+      "observation": {
+        "host": "192.168.1.90", "port": 5555, "proto": "tcp",
+        "banner": "host::features", "noAuth": true, "internetExposed": false
+      },
+      "expect": { "kind": "open-auth", "severity": "high", "service": "adb" }
+    },
+    {
+      "name": "android box adb forwarded to internet",
+      "observation": {
+        "host": "192.168.1.90", "port": 5555, "proto": "tcp",
+        "banner": "host::features", "noAuth": true, "internetExposed": true
+      },
+      "expect": { "kind": "exposed-service", "severity": "critical", "service": "adb" }
+    },
+    {
+      "name": "telnet console reused password, local",
+      "observation": {
+        "host": "192.168.1.30", "port": 2323, "proto": "tcp",
+        "banner": "BusyBox login:", "internetExposed": false
+      },
+      "expect": { "kind": "weak-service", "severity": "critical", "service": "telnet" }
+    },
+    {
+      "name": "smb share open to anonymous, local",
+      "observation": {
+        "host": "192.168.1.20", "port": 445, "proto": "tcp",
+        "banner": "Samba 4.10", "noAuth": true, "internetExposed": false
+      },
+      "expect": { "kind": "open-auth", "severity": "high", "service": "smb" }
+    },
+    {
+      "name": "router admin panel over http, local",
+      "observation": {
+        "host": "192.168.1.1", "port": 80, "proto": "tcp",
+        "httpServer": "Router Webserver", "banner": "WWW-Authenticate: Basic realm", "internetExposed": false
+      },
+      "expect": { "kind": "weak-service", "severity": "medium", "service": "http-admin" }
+    },
+    {
+      "name": "ssh on local network, safe service, downgraded to info",
+      "observation": {
+        "host": "192.168.1.10", "port": 22, "proto": "tcp",
+        "banner": "SSH-2.0-OpenSSH_9.6", "internetExposed": false
+      },
+      "expect": { "kind": "weak-service", "severity": "info", "service": "ssh" }
+    },
+    {
+      "name": "ssh forwarded to internet, low severity service so not escalated to exposed",
+      "observation": {
+        "host": "192.168.1.10", "port": 22, "proto": "tcp",
+        "banner": "SSH-2.0-OpenSSH_9.6", "internetExposed": true
+      },
+      "expect": { "kind": "weak-service", "severity": "info", "service": "ssh" }
+    },
+    {
+      "name": "self-signed https on local network, low, informational",
+      "observation": {
+        "host": "192.168.1.2", "port": 8443, "proto": "tcp",
+        "banner": "self-signed certificate", "internetExposed": false
+      },
+      "expect": { "kind": "weak-service", "severity": "info", "service": "https-selfsigned" }
+    },
+    {
+      "name": "axis camera that forces first-boot password, seen local, no weak-cred finding",
+      "observation": {
+        "host": "192.168.1.66", "port": 80, "proto": "tcp",
+        "httpServer": "Boa/0.94", "httpTitle": "Axis Live View", "internetExposed": false
+      },
+      "expect": { "kind": "weak-service", "severity": "medium", "service": "http-admin" }
+    },
+    {
+      "name": "unknown device newly on the network, nothing else",
+      "observation": {
+        "host": "192.168.1.150", "port": 0, "proto": "tcp",
+        "deviceName": "unknown", "isNew": true, "internetExposed": false
+      },
+      "expect": { "kind": "new-device", "severity": "info" }
+    },
+    {
+      "name": "rtsp camera forwarded to internet but unknown vendor, still exposed service",
+      "observation": {
+        "host": "192.168.1.71", "port": 554, "proto": "tcp",
+        "rtspServer": "Streaming Server", "internetExposed": true
+      },
+      "expect": { "kind": "exposed-service", "severity": "critical", "service": "rtsp" }
+    }
+  ]
+}

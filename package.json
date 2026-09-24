@@ -1,0 +1,12 @@
+{
+  "name": "soor",
+  "version": "0.1.0",
+  "description": "A home network security scanner that finds exposed devices and factory-password cameras, on the device, collecting nothing.",
+  "license": "MIT",
+  "author": "Ali AlEnezi",
+  "homepage": "https://soor.3li.info",
+  "repository": { "type": "git", "url": "https://github.com/SiteQ8/Soor" },
+  "scripts": {
+    "test": "node tests/run.js && node tests/dedup.js"
+  }
+}

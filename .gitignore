@@ -1,0 +1,4 @@
+node_modules/
+.gh_token
+*.log
+.DS_Store
