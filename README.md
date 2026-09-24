@@ -53,7 +53,7 @@ docs/          the site served at soor.3li.info
 tests/         shared vectors and the Node runner
 ios/Soor/      the iOS app (SwiftUI, real on-device scan)
 ios/SoorEngine/  the engine as a SwiftPM package, tested against the shared vectors
-android/       the Android app (Kotlin), next
+android/       the Android app (Kotlin, real on-device scan, no INTERNET permission)
 tools/         check-sync.sh, the guard that keeps every engine copy identical
 ```
 
@@ -63,6 +63,11 @@ reads the router's UPnP port-forward table to tell an internet-exposed device
 from a safe local one. It tries no passwords and exploits nothing. The Swift
 engine is the JS engine ported line for line, and CI runs both against the same
 `tests/vectors.json`, so a finding is identical on every platform.
+
+The Android app does the same work in Kotlin, and holds **no INTERNET
+permission at all**, so the system itself blocks it from sending anything off
+the local network. That is the privacy promise enforced by the platform rather
+than asserted by us, and CI fails the build if the permission ever appears.
 
 ## Tests
 

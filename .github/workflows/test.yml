@@ -45,3 +45,34 @@ jobs:
             -scheme Soor \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
+
+  engine-kotlin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Kotlin engine parity tests (shared vectors)
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+  android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Assemble the Android app
+        working-directory: android
+        run: ./gradlew :app:assembleDebug --no-daemon
+      - name: Fail if the app declares INTERNET permission
+        run: |
+          set -euo pipefail
+          if grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml; then
+            echo "ERROR: Soor must not request INTERNET permission"; exit 1
+          fi
+          echo "confirmed: no INTERNET permission declared"

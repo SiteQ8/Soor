@@ -27,6 +27,10 @@ check docs/data/cameras.json   ios/SoorEngine/Tests/SoorEngineTests/cameras.json
 # The shared vectors are the source of truth for the package test fixture.
 check tests/vectors.json  ios/SoorEngine/Tests/SoorEngineTests/vectors.json
 
+# The Android app bundles the same knowledge base from its assets.
+check docs/data/services.json  android/app/src/main/assets/services.json
+check docs/data/cameras.json   android/app/src/main/assets/cameras.json
+
 if [ "$fail" -eq 0 ]; then
   echo "engine and knowledge base are in sync across app, package, and site"
 fi
