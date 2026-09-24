@@ -96,21 +96,30 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p "$HOME/.appstoreconnect/private_keys"
           printf '%s' "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           IPA=$(ls "$RUNNER_TEMP/export/"*.ipa | head -1)
+
           echo "Validating $IPA"
+          set +e
           xcrun altool --validate-app -f "$IPA" -t ios \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee "$RUNNER_TEMP/validate.log"
-          if grep -qi "ERROR" "$RUNNER_TEMP/validate.log"; then
-            echo "Validation reported an error; not uploading."; exit 1
+          vrc=${PIPESTATUS[0]}
+          set -e
+          if [ "$vrc" -ne 0 ]; then
+            echo "Validation failed (altool exit $vrc)."; exit 1
           fi
+          echo "Validation passed."
+
           echo "Uploading $IPA"
+          set +e
           xcrun altool --upload-app -f "$IPA" -t ios \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee "$RUNNER_TEMP/upload.log"
-          if grep -qi "ERROR" "$RUNNER_TEMP/upload.log"; then
-            echo "Upload reported an error."; exit 1
+          urc=${PIPESTATUS[0]}
+          set -e
+          if [ "$urc" -ne 0 ]; then
+            echo "Upload failed (altool exit $urc)."; exit 1
           fi
           echo "Upload complete."
 
