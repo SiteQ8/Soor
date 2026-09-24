@@ -23,7 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.CompositionLocalProvider
 import info.eworldq8.soor.R
 import info.eworldq8.soor.engine.*
 import info.eworldq8.soor.scan.ScanState
