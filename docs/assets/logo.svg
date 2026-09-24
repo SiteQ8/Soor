@@ -1,56 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Soor">
   <defs>
-    <linearGradient id="shield" x1="0" y1="0" x2="0.35" y2="1">
-      <stop offset="0" stop-color="#1E4FC0"/>
-      <stop offset="0.55" stop-color="#0033A0"/>
-      <stop offset="1" stop-color="#002168"/>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4C70BC"/>
+      <stop offset="1" stop-color="#0033A0"/>
     </linearGradient>
-    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8CA3D4"/>
-      <stop offset="1" stop-color="#4C70BC"/>
-    </linearGradient>
-    <radialGradient id="pulse" cx="0.5" cy="0.42" r="0.6">
-      <stop offset="0" stop-color="#F2C879"/>
-      <stop offset="0.5" stop-color="#E8A13A"/>
+    <radialGradient id="scan" cx="0.5" cy="0.62" r="0.5">
+      <stop offset="0" stop-color="#E8A13A" stop-opacity="0.45"/>
       <stop offset="1" stop-color="#E8A13A" stop-opacity="0"/>
     </radialGradient>
   </defs>
-
-  <!-- rampart shield body -->
-  <path d="M256 44
-           L436 96
-           V244
-           c0 122 -80 190 -180 224
-           C156 434 76 366 76 244
-           V96 Z"
-        fill="url(#shield)" stroke="url(#edge)" stroke-width="10" stroke-linejoin="round"/>
-
-  <!-- rampart merlons across the top, the wall of Soor -->
-  <g fill="#001748" opacity="0.55">
-    <rect x="120" y="96" width="34" height="30"/>
-    <rect x="188" y="96" width="34" height="30"/>
-    <rect x="256" y="96" width="34" height="30"/>
-    <rect x="324" y="96" width="34" height="30"/>
+  <g fill="none" stroke="#4C70BC" stroke-opacity="0.22" stroke-width="3">
+    <circle cx="256" cy="268" r="140"/>
+    <circle cx="256" cy="268" r="186"/>
   </g>
-
-  <!-- scanning pulse behind the mesh -->
-  <circle cx="256" cy="232" r="120" fill="url(#pulse)"/>
-
-  <!-- network mesh: nodes and links -->
-  <g stroke="#DCE6FA" stroke-width="7" fill="none" stroke-linecap="round">
-    <line x1="256" y1="150" x2="176" y2="232"/>
-    <line x1="256" y1="150" x2="336" y2="232"/>
-    <line x1="176" y1="232" x2="256" y2="314"/>
-    <line x1="336" y1="232" x2="256" y2="314"/>
-    <line x1="176" y1="232" x2="336" y2="232"/>
-    <line x1="256" y1="150" x2="256" y2="314"/>
+  <circle cx="256" cy="286" r="140" fill="url(#scan)"/>
+  <g fill="url(#wall)">
+    <rect x="112" y="150" width="44" height="50" rx="6"/>
+    <rect x="178" y="150" width="44" height="50" rx="6"/>
+    <rect x="244" y="150" width="44" height="50" rx="6"/>
+    <rect x="310" y="150" width="44" height="50" rx="6"/>
+    <rect x="112" y="192" width="288" height="62" rx="8"/>
   </g>
-  <g fill="#FFFFFF" stroke="#0033A0" stroke-width="4">
-    <circle cx="256" cy="150" r="17"/>
-    <circle cx="176" cy="232" r="17"/>
-    <circle cx="336" cy="232" r="17"/>
-    <circle cx="256" cy="314" r="17"/>
+  <path d="M234 254 v-27 a22 22 0 0 1 44 0 v27 z" fill="#EAF0FB"/>
+  <g stroke="#4C70BC" stroke-width="9" fill="none" stroke-linecap="round">
+    <line x1="256" y1="290" x2="180" y2="342"/>
+    <line x1="256" y1="290" x2="332" y2="342"/>
+    <line x1="180" y1="342" x2="256" y2="394"/>
+    <line x1="332" y1="342" x2="256" y2="394"/>
+    <line x1="180" y1="342" x2="332" y2="342"/>
   </g>
-  <!-- central node lit in gold: the scan focus -->
-  <circle cx="256" cy="232" r="15" fill="#E8A13A" stroke="#FFFFFF" stroke-width="4"/>
+  <g fill="#FFFFFF" stroke="#0033A0" stroke-width="6">
+    <circle cx="256" cy="290" r="20"/>
+    <circle cx="180" cy="342" r="20"/>
+    <circle cx="256" cy="394" r="20"/>
+  </g>
+  <circle cx="332" cy="342" r="20" fill="#E8A13A" stroke="#FFFFFF" stroke-width="6"/>
 </svg>
