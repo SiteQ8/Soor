@@ -2,7 +2,7 @@
 
 <div dir="rtl">
 
-**سُور** تطبيق يفحص شبكة بيتك كما يفحصها المختبِر، فيكشف الأجهزة المتصلة بها وما تفتحه من منافذ خطرة، ويحذّرك من الكاميرا التي ما زالت على كلمة مرور المصنع ومنفذها مفتوح إلى الإنترنت قبل أن تجدها محركات الفحص العامة، ويعمل داخل الهاتف بلا حساب ولا خادم ولا جمع بيانات.
+**سُور** تطبيق يفحص شبكة بيتك كما يفحصها المختبِر، فيجد كل جهاز متصل بها ويقرأ ما يفتحه من منافذ، ويميّز المكشوف منها إلى الإنترنت من الآمن داخل الشبكة، ثم يرتّب ما وجده بحسب الخطورة مع خطوة إصلاح لكل اكتشاف، ومن ذلك التحذير من الكاميرات المكشوفة، ويعمل داخل الهاتف بلا حساب ولا خادم ولا جمع بيانات.
 
 الموقع: https://soor.3li.info
 
@@ -28,7 +28,7 @@
 
 ## What it is
 
-**Soor** scans your home network the way a tester would. It finds the devices on your network and the risky ports they leave open, and warns you about the camera still on its factory password with its port open to the internet, before public scanning engines find it. It runs inside the phone, with no account, no server, and no data collection.
+**Soor** scans your home network the way a tester would. It finds every device on your network and reads the ports each one leaves open, tells what is exposed to the internet from what is safe inside, then ranks what it found by severity with a clear fix for each, cameras among them. It runs inside the phone, with no account, no server, and no data collection.
 
 Site: https://soor.3li.info
 

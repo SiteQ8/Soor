@@ -114,14 +114,14 @@ struct AboutView: View {
                     Text(ar ? "عن سُور" : "About Soor")
                         .font(.title2.weight(.bold)).foregroundStyle(Theme.ink(scheme))
                     Text(ar
-                         ? "سُور يفحص شبكة بيتك كما يفحصها المختبِر، فيكشف الأجهزة المتصلة بها وما تفتحه من منافذ خطرة، ويحذّرك من الكاميرا التي ما زالت على كلمة مرور المصنع ومنفذها مفتوح إلى الإنترنت قبل أن تجدها محركات الفحص العامة."
-                         : "Soor scans your home network the way a tester would. It finds the connected devices and the risky ports they leave open, and warns you about a camera still on its factory password with its port open to the internet, before public scanning engines find it.")
+                         ? "سُور يفحص شبكة بيتك كما يفحصها المختبِر، فيجد كل جهاز متصل بها ويقرأ ما يفتحه من منافذ، ويميّز المكشوف منها إلى الإنترنت من الآمن داخل الشبكة، ثم يرتّب ما وجده بحسب الخطورة مع خطوة إصلاح لكل اكتشاف، ومن ذلك التحذير من الكاميرات المكشوفة."
+                         : "Soor scans your home network the way a tester would. It finds every connected device and reads the ports it leaves open, tells what is exposed to the internet from what is safe inside, then ranks what it found by severity with a fix for each, cameras among them.")
                         .foregroundStyle(Theme.ink2(scheme))
                     block(ar ? "لا يجرّب كلمات المرور" : "It never tries passwords",
-                          ar ? "سُور أداة دفاعية. لا يجرّب كلمة مرور على أي جهاز ولا يستغل ثغرة، بل يطرق الأبواب ويقرأ ما تعلنه الأجهزة عن نفسها فقط."
+                          ar ? "سُور أداة دفاعية، فلا يجرّب كلمة مرور على أي جهاز ولا يستغل ثغرة، بل يطرق الأبواب ويقرأ ما تعلنه الأجهزة عن نفسها فقط."
                              : "Soor is a defensive tool. It tries no password on any device and exploits nothing. It knocks on doors and reads only what devices announce about themselves.")
                     block(ar ? "لا يجمع بياناتك" : "It collects nothing",
-                          ar ? "يعمل داخل هاتفك بالكامل. لا حساب ولا خادم، ولا يخرج بشيء عنك، ومعرفته كلها مشحونة داخله."
+                          ar ? "يعمل داخل هاتفك بالكامل، فلا حساب ولا خادم، ولا يخرج بشيء عنك، ومعرفته كلها مشحونة داخله."
                              : "It runs entirely inside your phone. No account, no server, it takes nothing about you out, and all its knowledge is shipped inside it.")
                     block(ar ? "شبكتك وحدها" : "Your network only",
                           ar ? "يفحص الشبكة المتصل بها الهاتف ولا يتجاوز عناوينها الخاصة."

@@ -101,7 +101,7 @@ enum SoorReport {
                 : "Change the device password now and do not leave it on factory details.", at: 0)
         case "new-device":
             detail.append(lang == .ar
-                ? "تحقّق أنك تعرف هذا الجهاز. إن لم تعرفه فافصله وغيّر كلمة مرور الشبكة."
+                ? "تحقّق أنك تعرف هذا الجهاز، فإن لم تعرفه فافصله وغيّر كلمة مرور الشبكة."
                 : "Check that you recognise this device. If you do not, disconnect it and change the network password.")
         default: break
         }

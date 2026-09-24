@@ -104,7 +104,7 @@ struct ScanView: View {
             Text(ar ? "لا توجد شبكة واي فاي" : "No Wi-Fi network")
                 .fontWeight(.semibold)
             Text(ar
-                 ? "اتصل بشبكة الواي فاي في بيتك ثم افحص. سُور يفحص الشبكة المتصل بها فقط."
+                 ? "اتصل بشبكة الواي فاي في بيتك ثم افحص، فسُور يفحص الشبكة المتصل بها فقط."
                  : "Connect to your home Wi-Fi, then scan. Soor scans only the network you are on.")
                 .font(.footnote)
                 .multilineTextAlignment(.center)
@@ -181,7 +181,7 @@ struct ScanView: View {
         HStack(spacing: 10) {
             Image(systemName: "lock.fill").foregroundStyle(Theme.navyLite)
             Text(ar
-                 ? "يعمل على جهازك بالكامل. لا حساب ولا خادم ولا جمع بيانات."
+                 ? "يعمل على جهازك بالكامل، فلا حساب ولا خادم ولا جمع بيانات."
                  : "Runs entirely on your device. No account, no server, no data collection.")
                 .font(.caption)
                 .foregroundStyle(Theme.ink2(scheme))

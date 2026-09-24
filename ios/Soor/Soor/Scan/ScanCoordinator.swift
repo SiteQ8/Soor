@@ -99,13 +99,13 @@ final class ScanCoordinator: ObservableObject {
         }
         for f in findings {
             let r = SoorReport.render(f, knowledge, lang)
-            lines.append("[\(r.severityLabel)] \(r.title) — \(r.host):\(r.port)")
+            lines.append("[\(r.severityLabel)] \(r.title) | \(r.host):\(r.port)")
             if !r.detail.isEmpty { lines.append(r.detail) }
             if !r.fix.isEmpty { lines.append((lang == .ar ? "الحل: " : "Fix: ") + r.fix) }
             lines.append("")
         }
         lines.append(lang == .ar
-            ? "فُحص محليًا على الجهاز بتطبيق سُور. لم تُجمع أو تُرسل أي بيانات."
+            ? "فُحص محليًا على الجهاز بتطبيق سُور، ولم تُجمع أو تُرسل أي بيانات."
             : "Scanned locally on the device by Soor. No data collected or sent.")
         return lines.joined(separator: "\n")
     }
