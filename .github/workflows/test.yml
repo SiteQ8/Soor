@@ -21,7 +21,7 @@ jobs:
         run: bash tools/check-sync.sh
 
   engine-swift:
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Swift engine parity tests (shared vectors)
@@ -29,7 +29,7 @@ jobs:
         run: swift test
 
   ios-build:
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Select newest installed Xcode
