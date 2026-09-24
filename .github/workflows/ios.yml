@@ -72,32 +72,23 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             clean archive
 
-      - name: Write ExportOptions.plist
-        run: |
-          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>teamID</key><string>FKZPXUFH45</string>
-            <key>uploadSymbols</key><true/>
-            <key>signingStyle</key><string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.eworldq8.soor</key><string>${PROFILE_UUID}</string>
-            </dict>
-          </dict>
-          </plist>
-          PLIST
-
-      - name: Export .ipa
+      - name: Package IPA from the archive (with executable check)
         run: |
           set -euo pipefail
-          xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/Soor.xcarchive" \
-            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-            -exportPath "$RUNNER_TEMP/export"
+          APP="$RUNNER_TEMP/Soor.xcarchive/Products/Applications/Soor.app"
+          test -d "$APP" || { echo "no app in archive"; exit 1; }
+          # The archive is already signed with the distribution identity. Fail loudly
+          # if the linked executable is missing, rather than shipping an empty bundle.
+          test -f "$APP/Soor" || { echo "ERROR: app bundle has no executable"; ls -la "$APP"; exit 1; }
+          echo "executable present: $(du -h "$APP/Soor" | cut -f1)"
+          WORK="$RUNNER_TEMP/ipa"
+          rm -rf "$WORK"; mkdir -p "$WORK/Payload"
+          cp -R "$APP" "$WORK/Payload/Soor.app"
+          mkdir -p "$RUNNER_TEMP/export"
+          ( cd "$WORK" && zip -qry "$RUNNER_TEMP/export/Soor.ipa" Payload )
+          echo "ipa size: $(du -h "$RUNNER_TEMP/export/Soor.ipa" | cut -f1)"
+          # sanity: the ipa must contain the executable
+          unzip -l "$RUNNER_TEMP/export/Soor.ipa" | grep -q "Payload/Soor.app/Soor" || { echo "ERROR: ipa missing executable"; exit 1; }
 
       - name: Upload to App Store Connect
         env:
@@ -107,10 +98,21 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.appstoreconnect/private_keys"
-          echo "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s' "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
           IPA=$(ls "$RUNNER_TEMP/export/"*.ipa | head -1)
+          echo "Validating $IPA"
+          xcrun altool --validate-app -f "$IPA" -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee "$RUNNER_TEMP/validate.log"
+          if grep -qi "ERROR" "$RUNNER_TEMP/validate.log"; then
+            echo "Validation reported an error; not uploading."; exit 1
+          fi
+          echo "Uploading $IPA"
           xcrun altool --upload-app -f "$IPA" -t ios \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee "$RUNNER_TEMP/upload.log"
+          if grep -qi "ERROR" "$RUNNER_TEMP/upload.log"; then
+            echo "Upload reported an error."; exit 1
+          fi
+          echo "Upload complete."
 
       - name: Upload .ipa as build artifact
         uses: actions/upload-artifact@v4
