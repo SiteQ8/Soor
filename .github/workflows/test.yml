@@ -69,10 +69,16 @@ jobs:
       - name: Assemble the Android app
         working-directory: android
         run: ./gradlew :app:assembleDebug --no-daemon
-      - name: Fail if the app declares INTERNET permission
+      - name: Fail if the built app declares INTERNET permission
         run: |
           set -euo pipefail
-          if grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml; then
+          # Check the MERGED manifest the build actually produced, not the source
+          # text, so a comment mentioning the permission cannot trip the guard and
+          # a permission pulled in by a dependency cannot slip past it.
+          merged=$(find android/app/build -name AndroidManifest.xml -path '*merged*' | head -1)
+          if [ -z "$merged" ]; then echo "merged manifest not found"; exit 1; fi
+          echo "checking $merged"
+          if grep -E '<uses-permission[^>]*android:name="android\.permission\.INTERNET"' "$merged"; then
             echo "ERROR: Soor must not request INTERNET permission"; exit 1
           fi
-          echo "confirmed: no INTERNET permission declared"
+          echo "confirmed: the built app declares no INTERNET permission"
