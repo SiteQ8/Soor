@@ -11,7 +11,9 @@ android {
         applicationId = "com.eworldq8.soor"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        // CI numbers every build it sends to Play, because Play refuses a version
+        // code it has already seen; a local build stays at 1, the first upload
+        versionCode = (System.getenv("SOOR_VERSION_CODE") ?: "1").toInt()
         versionName = "1.0"
         resourceConfigurations += listOf("ar", "en")
     }

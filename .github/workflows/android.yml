@@ -1,0 +1,160 @@
+# Builds سُور for Android on GitHub's own machine and, once the keys are in
+# place, sends it straight to the closed test on Google Play. The same path
+# سُنّتي takes, so a fix reaches the testers the day it is written instead of
+# waiting for someone to build and upload it by hand.
+#
+# What it does, and when:
+#   • every push to main that touches the Android app, its tools, or the
+#     release notes: the engine and LocalOnly tests, lint, and a debug apk you
+#     can install on your own phone straight from Artifacts
+#   • when the four signing secrets are set: a release bundle signed with the
+#     upload key Play knows, numbered above every build before it
+#   • when PLAY_SERVICE_ACCOUNT is set too: that bundle goes to the closed
+#     testing track, with the release notes in play/whatsnew
+#
+# The secrets, put in place by tools/android/set-secrets.py:
+#   ANDROID_KEYSTORE            the upload keystore, base64 of the .keystore
+#   ANDROID_KEYSTORE_PASSWORD   its store password
+#   ANDROID_KEY_ALIAS           the alias inside it, soor-upload
+#   ANDROID_KEY_PASSWORD        the key's own password
+#   PLAY_SERVICE_ACCOUNT        the service account json, whole
+#
+# Play will not accept the very first bundle of a new app through its API: the
+# package name only exists once a first build has been uploaded by hand in the
+# Play Console. Every upload after that one goes through here.
+
+name: Android
+
+# A tag push carries no paths, so naming branches, paths and tags in one push
+# block is refused when the workflow is read, and the run dies in two seconds
+# with no step to show for it (سُنّتي lost its first signed build that way).
+# The branch filter is what remains, and Run workflow covers a build on demand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'docs/data/**'
+      - 'tools/android/**'
+      - 'play/whatsnew/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # the engine must agree on all three platforms before anything is built
+      - name: محرّك سُور والمزامنة
+        run: |
+          node tests/run.js
+          node tests/dedup.js
+          bash tools/check-sync.sh
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: تخزين gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle.kts', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+
+      # the engine's parity with JS and Swift, and LocalOnly, the rule that keeps
+      # every connection inside the home network
+      - name: الاختبارات
+        run: cd android && chmod +x gradlew && ./gradlew --no-daemon :app:testDebugUnitTest
+
+      # lint over the release variant is what catches a call into an api newer
+      # than minSdk: it compiles perfectly and throws on the phone
+      - name: التدقيق
+        run: cd android && ./gradlew --no-daemon :app:lintRelease
+
+      - name: ابنِ للتجربة
+        run: cd android && ./gradlew --no-daemon :app:assembleDebug
+
+      - name: احفظ حزمة التجربة
+        uses: actions/upload-artifact@v4
+        with:
+          name: soor-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      # Without secrets the build stops here, having proved it compiles and
+      # having produced something to install. With them it signs for Play.
+      - name: هل هناك توقيع
+        id: signing
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE }}" ]; then
+            echo "ready=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::لا مفتاح توقيع، حزمة التجربة وحدها"
+          fi
+
+      # Play refuses a version code it has already seen. The first bundle, sent
+      # by hand, is 1, so every build from here is numbered above it.
+      - name: رقم الإصدار
+        if: steps.signing.outputs.ready == 'yes'
+        run: echo "SOOR_VERSION_CODE=$((GITHUB_RUN_NUMBER + 1))" >> "$GITHUB_ENV"
+
+      # The keystore is written into the runner's temporary folder, which dies
+      # with the machine, and the build reads it from the environment.
+      - name: ابنِ ووقّع
+        if: steps.signing.outputs.ready == 'yes'
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          SOOR_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SOOR_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SOOR_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/soor-upload.keystore"
+          export SOOR_KEYSTORE="$RUNNER_TEMP/soor-upload.keystore"
+          cd android && ./gradlew --no-daemon :app:bundleRelease
+          echo "رقم الإصدار: $SOOR_VERSION_CODE"
+          keytool -list -v -keystore "$SOOR_KEYSTORE" -alias "$SOOR_KEY_ALIAS" \
+            -storepass "$SOOR_KEYSTORE_PASSWORD" | grep SHA256 || true
+
+      - name: احفظ حزمة المتجر
+        if: steps.signing.outputs.ready == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: soor-android-release
+          path: android/app/build/outputs/bundle/release/*.aab
+          retention-days: 14
+
+      - name: هل هناك مفتاح Play
+        id: play
+        if: steps.signing.outputs.ready == 'yes'
+        run: |
+          if [ -n "${{ secrets.PLAY_SERVICE_ACCOUNT }}" ]; then
+            echo "ready=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::لا مفتاح Play، الحزمة تُحفظ ولا تُرفع"
+          fi
+
+      # الرفع بشفرتنا لا بإجراء من طرف ثالث: الخطوة تأخذ مفتاح حساب الخدمة
+      # والحزمة الموقّعة معًا، وذلك أوسع ثقة مما يستحقه إجراء لا نقرأ شفرته.
+      # والمسار هو الاختبار المغلق، لأن فيه تُحسب مدة الأربعة عشر يومًا.
+      - name: ارفع إلى الاختبار المغلق
+        if: steps.play.outputs.ready == 'yes'
+        env:
+          PLAY_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+        run: |
+          pip install --quiet cryptography
+          python3 tools/android/play-upload.py \
+            --aab "$(ls android/app/build/outputs/bundle/release/*.aab | head -1)" \
+            --track alpha --notes play/whatsnew
+
+      - name: امسح المفتاح
+        if: always()
+        run: rm -f "$RUNNER_TEMP/soor-upload.keystore"
