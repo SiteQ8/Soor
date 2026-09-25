@@ -18,7 +18,7 @@
 
 ## لا يجمع بياناتك
 
-سُور يعمل داخل الهاتف بالكامل، إذ تُشحن معرفته كلها فيه فلا يحتاج خادمًا، ونسخة الأندرويد لا تطلب إذن الإنترنت أصلًا فلا تستطيع أن ترسل شيئًا حتى لو أرادت، وهذا مفروض ببنية التطبيق لا بوعد، ويمكن لأي أحد أن يتحقق منه في هذه الشيفرة المفتوحة.
+سُور يعمل داخل الهاتف بالكامل، إذ تُشحن معرفته كلها فيه فلا يحتاج خادمًا، ولا يتصل إلا بعناوين داخل شبكة البيت، لأن في شيفرته قاعدة ترفض أي عنوان خارجها قبل الاتصال به، وتُختبر آليًا مع كل بناء، ويمكن لأي أحد أن يتحقق منها في هذه الشيفرة المفتوحة.
 
 ## البنية
 
@@ -40,7 +40,7 @@ Soor never tries a password on any camera, because that would make it an attack 
 
 ## Privacy
 
-Soor runs entirely on the device. All its knowledge is shipped inside it, so it needs no server, and the Android version does not even request internet permission, so it cannot send anything even if it wanted to. This is enforced by the app's structure, not promised, and anyone can verify it in this open source.
+Soor runs entirely on the device. All its knowledge is shipped inside it, so it needs no server, and it only ever connects to addresses inside the home network: a rule in its code refuses any other address before connecting, and that rule is tested on every build. Anyone can verify it in this open source.
 
 ## Structure
 
@@ -53,7 +53,7 @@ docs/          the site served at soor.3li.info
 tests/         shared vectors and the Node runner
 ios/Soor/      the iOS app (SwiftUI, real on-device scan)
 ios/SoorEngine/  the engine as a SwiftPM package, tested against the shared vectors
-android/       the Android app (Kotlin, real on-device scan, no INTERNET permission)
+android/       the Android app (Kotlin, real on-device scan, home-network addresses only)
 tools/         check-sync.sh, the guard that keeps every engine copy identical
 ```
 
@@ -64,10 +64,29 @@ from a safe local one. It tries no passwords and exploits nothing. The Swift
 engine is the JS engine ported line for line, and CI runs both against the same
 `tests/vectors.json`, so a finding is identical on every platform.
 
-The Android app does the same work in Kotlin, and holds **no INTERNET
-permission at all**, so the system itself blocks it from sending anything off
-the local network. That is the privacy promise enforced by the platform rather
-than asserted by us, and CI fails the build if the permission ever appears.
+The Android app does the same work in Kotlin. Android requires the INTERNET
+permission for any network connection, even to a device in the same room, so
+the app holds it. What keeps Soor inside the home is `LocalOnly`: every
+connection passes it before it is made, and it refuses anything but private
+home-network addresses and never resolves a hostname. `LocalOnlyTest` proves the
+rule and fails the build if any connection in the scanner skips it, and CI fails
+if the app ever asks for a permission beyond the two it needs.
+
+## Android release
+
+A release bundle is signed with the upload key, which never enters the
+repository. The build reads it from the environment:
+
+```sh
+export SOOR_KEYSTORE=/path/to/soor-upload.keystore
+export SOOR_KEY_ALIAS=soor-upload
+export SOOR_KEYSTORE_PASSWORD=...
+cd android && ./gradlew :app:bundleRelease
+```
+
+The first upload of a new app to Google Play has to be done by hand in the
+Play Console, because the package name only exists once a first build is
+uploaded. Store texts and graphics are in `play/`.
 
 ## Tests
 

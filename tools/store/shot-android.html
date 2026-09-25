@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0033A0;--navy-lite:#4C70BC;--navy-deep:#002168;--signal:#E8A13A;
+    --bg:#05060E;--bg2:#0A1024;--panel:#0F1730;--ink:#EAF0FB;--ink2:#A7B4D4;--rule:#23305A;
+    --crit:#FF6B5B;--high:#F0904A;--info:#6FA8E8;--ok:#52C48D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Readex Pro",sans-serif}
+  body{background:#000}
+  .shot{width:1290px;height:2293px;position:relative;overflow:hidden;
+    background:radial-gradient(130% 60% at 100% 0%,rgba(30,79,192,.22),transparent 55%),var(--bg);
+    display:flex;flex-direction:column}
+  .caption{padding:90px 80px 34px;text-align:center}
+  .caption h2{color:var(--ink);font-size:76px;font-weight:700;line-height:1.2;letter-spacing:-.5px}
+  .caption p{color:var(--ink2);font-size:40px;margin-top:24px;font-weight:400}
+  .caption h2 .g{color:var(--signal)}
+  .device{margin:20px auto 0;width:1020px;flex:1;
+    background:var(--bg2);border:3px solid var(--rule);border-radius:70px 70px 0 0;
+    box-shadow:0 -10px 80px rgba(0,51,160,.35);overflow:hidden;position:relative}
+  .statusbar{height:66px;gap:18px;display:flex;align-items:center;justify-content:space-between;padding:0 60px;color:var(--ink);font-size:30px;font-weight:600}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:20px 50px}
+  .nav .lng{color:var(--ink2);font-size:30px;border:1px solid var(--rule);border-radius:14px;padding:10px 20px}
+  .nav .info{color:var(--ink2);font-size:40px}
+  .content{padding:40px 60px}
+  .logo{width:230px;height:230px;display:block;margin:34px auto 14px}
+  .brand{color:var(--ink);font-size:64px;font-weight:700;text-align:center}
+  .tagline{color:var(--ink2);font-size:34px;text-align:center;margin-top:12px}
+  .btn{background:var(--navy);color:#fff;font-size:40px;font-weight:600;text-align:center;
+    padding:32px;border-radius:26px;margin:40px 0 18px}
+  .sub{color:var(--ink2);font-size:30px;text-align:center}
+  .pillrow{display:flex;gap:18px;margin:10px 0 30px;flex-wrap:wrap}
+  .pill{font-family:"IBM Plex Mono",monospace;font-size:28px;padding:12px 24px;border-radius:999px;border:1px solid var(--rule)}
+  .pill.c{color:var(--crit);border-color:rgba(255,107,91,.5)}
+  .pill.h{color:var(--high);border-color:rgba(240,144,74,.5)}
+  .pill.i{color:var(--info);border-color:rgba(111,168,232,.5)}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:28px;margin-bottom:26px;overflow:hidden;display:flex}
+  .card .bar{width:8px}
+  .card.c .bar{background:var(--crit)} .card.h .bar{background:var(--high)} .card.i .bar{background:var(--info)}
+  .card .body{padding:34px 36px;flex:1}
+  .card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .sev{font-family:"IBM Plex Mono",monospace;font-size:24px;padding:6px 18px;border-radius:10px}
+  .sev.c{color:var(--crit);background:rgba(255,107,91,.14)} .sev.h{color:var(--high);background:rgba(240,144,74,.14)} .sev.i{color:var(--info);background:rgba(111,168,232,.14)}
+  .addr{font-family:"IBM Plex Mono",monospace;color:var(--ink2);font-size:26px}
+  .card .title{color:var(--ink);font-size:38px;font-weight:600;margin-bottom:14px}
+  .card .detail{color:var(--ink2);font-size:30px;line-height:1.5}
+  .fix{background:rgba(76,112,188,.16);border-inline-start:5px solid var(--navy-lite);border-radius:16px;padding:26px 30px;margin-top:22px}
+  .fix b{color:var(--navy-lite)}.fix{color:var(--ink);font-size:30px;line-height:1.5}
+  .privacy{background:rgba(0,51,160,.14);border:1px solid rgba(76,112,188,.4);border-radius:28px;padding:48px;text-align:center;margin-top:40px}
+  .privacy .ic{font-size:80px;color:var(--navy-lite)}
+  .privacy h3{color:var(--ink);font-size:46px;font-weight:700;margin:24px 0 16px}
+  .privacy p{color:var(--ink2);font-size:34px;line-height:1.5}
+  .prog{height:16px;background:var(--rule);border-radius:999px;overflow:hidden;margin:40px 0 20px}
+  .feat{display:flex;align-items:center;gap:26px;background:var(--panel);border:1px solid var(--rule);border-radius:24px;padding:32px 34px;margin-top:22px}
+  .feat .ic{font-size:46px;width:70px;text-align:center}
+  .feat .t{color:var(--ink);font-size:34px;font-weight:600}
+  .feat .d{color:var(--ink2);font-size:28px;margin-top:6px}
+  .prog i{display:block;height:100%;width:62%;background:var(--navy);border-radius:999px}
+</style></head>
+<body>
+<div class="shot" id="shot">
+  <!-- filled by ?scene= -->
+</div>
+<script>
+const NODES = `<svg class="logo" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4C70BC"/><stop offset="1" stop-color="#0033A0"/></linearGradient><radialGradient id="sc" cx="0.5" cy="0.62" r="0.5"><stop offset="0" stop-color="#E8A13A" stop-opacity="0.45"/><stop offset="1" stop-color="#E8A13A" stop-opacity="0"/></radialGradient></defs><g fill="none" stroke="#4C70BC" stroke-opacity="0.22" stroke-width="3"><circle cx="256" cy="268" r="140"/><circle cx="256" cy="268" r="186"/></g><circle cx="256" cy="286" r="140" fill="url(#sc)"/><g fill="url(#w)"><rect x="112" y="150" width="44" height="50" rx="6"/><rect x="178" y="150" width="44" height="50" rx="6"/><rect x="244" y="150" width="44" height="50" rx="6"/><rect x="310" y="150" width="44" height="50" rx="6"/><rect x="112" y="192" width="288" height="62" rx="8"/></g><path d="M234 254 v-27 a22 22 0 0 1 44 0 v27 z" fill="#EAF0FB"/><g stroke="#4C70BC" stroke-width="9" fill="none" stroke-linecap="round"><line x1="256" y1="290" x2="180" y2="342"/><line x1="256" y1="290" x2="332" y2="342"/><line x1="180" y1="342" x2="256" y2="394"/><line x1="332" y1="342" x2="256" y2="394"/><line x1="180" y1="342" x2="332" y2="342"/></g><g fill="#FFFFFF" stroke="#0033A0" stroke-width="6"><circle cx="256" cy="290" r="20"/><circle cx="180" cy="342" r="20"/><circle cx="256" cy="394" r="20"/></g><circle cx="332" cy="342" r="20" fill="#E8A13A" stroke="#FFFFFF" stroke-width="6"/></svg>`;
+const bar = `<div class="statusbar"><span>12:30</span><span style="display:flex;gap:14px;align-items:center"><svg width="34" height="26" viewBox="0 0 24 18"><path fill="#EAF0FB" d="M12 18l4-5a6 6 0 0 0-8 0zM12 7a11 11 0 0 1 7.8 3.2l2-2.6A14 14 0 0 0 12 4 14 14 0 0 0 2.2 7.6l2 2.6A11 11 0 0 1 12 7z"/></svg><svg width="20" height="30" viewBox="0 0 12 20"><rect x="3.5" y="0" width="5" height="2" rx="1" fill="#EAF0FB"/><rect x="0.8" y="2" width="10.4" height="17.2" rx="2" fill="none" stroke="#EAF0FB" stroke-width="1.4"/><rect x="2.4" y="6" width="7.2" height="11.6" rx="1" fill="#EAF0FB"/></svg></span></div><div class="nav"><span class="lng">English</span><span class="info">ⓘ</span></div>`;
+const scenes = {
+  home:{cap:`افحص شبكة بيتك كما يفحصها <span class="g">مختبِر الاختراق</span>`, sub:`اعرف كل جهاز وما يفتحه من أبواب`,
+    body:`${bar}<div class="content">${NODES}<div class="brand">سُور</div><div class="tagline">فاحص أمان شبكة البيت</div><div class="btn">◉ افحص شبكتي</div><div class="sub">يعمل على جهازك · لا جمع بيانات</div>
+    <div class="feat"><div class="ic">📡</div><div><div class="t">كل جهاز على شبكتك</div><div class="d">وما يفتحه من منافذ وخدمات</div></div></div>
+    <div class="feat"><div class="ic">🚪</div><div><div class="t">ما هو مكشوف للإنترنت</div><div class="d">من جدول منافذ الراوتر</div></div></div>
+    <div class="feat"><div class="ic">📷</div><div><div class="t">ومن ضمنها الكاميرات</div><div class="d">تحذير من المكشوف منها</div></div></div>
+    <div class="feat"><div class="ic">🔒</div><div><div class="t">بلا جمع بيانات</div><div class="d">لا حساب ولا خادم</div></div></div></div>`},
+  results:{cap:`نتيجة الفحص <span class="g">مرتّبة بالخطورة</span>`, sub:`من الحرِج إلى ما يستحق المراجعة`,
+    body:`${bar}<div class="content"><div class="pillrow"><span class="pill c"><b>1</b> حرِج</span><span class="pill h"><b>2</b> مرتفع</span><span class="pill i"><b>1</b> للعلم</span></div>
+    <div class="card c"><div class="bar"></div><div class="body"><div class="top"><span class="sev c">حرِج</span><span class="addr">192.168.1.64:554</span></div><div class="title">كاميرا مكشوفة للإنترنت بكلمة مرور مصنع</div><div class="detail">منفذ هذه الكاميرا مرّره الراوتر إلى الإنترنت وطرازها يُشحن ببيانات دخول معروفة.</div></div></div>
+    <div class="card h"><div class="bar"></div><div class="body"><div class="top"><span class="sev h">مرتفع</span><span class="addr">192.168.1.20:445</span></div><div class="title">خدمة تستجيب دون كلمة مرور</div><div class="detail">مشاركة ملفات مفتوحة يقرؤها أي جهاز على الشبكة.</div></div></div>
+    <div class="card h"><div class="bar"></div><div class="body"><div class="top"><span class="sev h">مرتفع</span><span class="addr">192.168.1.1:1900</span></div><div class="title">خدمة UPnP في الراوتر</div><div class="detail">تفتح منافذ إلى الإنترنت دون علمك.</div></div></div></div>`},
+  detail:{cap:`لكل اكتشاف <span class="g">خطوة إصلاح</span>`, sub:`بلغة يفهمها الجميع`,
+    body:`${bar}<div class="content"><div class="card c" style="margin-top:30px"><div class="bar"></div><div class="body"><div class="top"><span class="sev c">حرِج</span><span class="addr">192.168.1.64:554</span></div><div class="title">كاميرا مكشوفة للإنترنت بكلمة مرور مصنع</div><div class="detail">منفذ هذه الكاميرا مرّره الراوتر إلى الإنترنت وطرازها يُشحن ببيانات دخول معروفة للعامة، فهي قابلة لأن تظهر في محركات الفحص العامة.</div><div class="fix"><b>الحل: </b>غيّر كلمة مرور الكاميرا الآن ثم أغلق تمرير المنفذ في الراوتر أو عطّل UPnP.</div></div></div></div>`},
+  privacy:{cap:`لا يجمع <span class="g">بياناتك</span>`, sub:`مفتوح المصدر · يعمل على جهازك`,
+    body:`${bar}<div class="content">${NODES}<div class="brand" style="font-size:52px">سُور</div><div class="privacy"><div class="ic">🔒</div><h3>يعمل على جهازك بالكامل</h3><p>لا حساب ولا خادم ولا جمع بيانات، ومعرفته كلها مشحونة داخله، ويمكن لأي أحد أن يتحقق بنفسه في الشيفرة المفتوحة.</p></div></div>`},
+};
+const barEn = bar.replace('<span class="lng">English</span>','<span class="lng">العربية</span>');
+const scenesEn = {
+  home:{cap:`Scan your home network the way a <span class="g">penetration tester</span> would`, sub:`Know every device and every door it opens`,
+    body:`${barEn}<div class="content">${NODES}<div class="brand">Soor</div><div class="tagline">Home network security scanner</div><div class="btn">◉ Scan my network</div><div class="sub">Runs on your device · no data collected</div>
+    <div class="feat"><div class="ic">📡</div><div><div class="t">Every device on your network</div><div class="d">and the ports and services it opens</div></div></div>
+    <div class="feat"><div class="ic">🚪</div><div><div class="t">What is exposed to the internet</div><div class="d">from the router's port table</div></div></div>
+    <div class="feat"><div class="ic">📷</div><div><div class="t">Cameras included</div><div class="d">warns about exposed ones</div></div></div>
+    <div class="feat"><div class="ic">🔒</div><div><div class="t">No data collection</div><div class="d">no account, no server</div></div></div></div>`},
+  results:{cap:`Results <span class="g">ranked by severity</span>`, sub:`From critical to worth reviewing`,
+    body:`${barEn}<div class="content"><div class="pillrow"><span class="pill c"><b>1</b> Critical</span><span class="pill h"><b>2</b> High</span><span class="pill i"><b>1</b> Info</span></div>
+    <div class="card c"><div class="bar"></div><div class="body"><div class="top"><span class="sev c">Critical</span><span class="addr">192.168.1.64:554</span></div><div class="title">Camera exposed to the internet with a factory password</div><div class="detail">The router forwards this camera's port to the internet, and its model ships with known login details.</div></div></div>
+    <div class="card h"><div class="bar"></div><div class="body"><div class="top"><span class="sev h">High</span><span class="addr">192.168.1.20:445</span></div><div class="title">Service that answers with no password</div><div class="detail">An open file share any device on the network can read.</div></div></div>
+    <div class="card h"><div class="bar"></div><div class="body"><div class="top"><span class="sev h">High</span><span class="addr">192.168.1.1:1900</span></div><div class="title">UPnP service on the router</div><div class="detail">Opens ports to the internet without your knowledge.</div></div></div></div>`},
+  detail:{cap:`Every finding comes <span class="g">with a fix</span>`, sub:`In plain language`,
+    body:`${barEn}<div class="content"><div class="card c" style="margin-top:30px"><div class="bar"></div><div class="body"><div class="top"><span class="sev c">Critical</span><span class="addr">192.168.1.64:554</span></div><div class="title">Camera exposed to the internet with a factory password</div><div class="detail">The router forwards this camera's port to the internet, and its model ships with publicly known login details, so it can show up on public scanning engines.</div><div class="fix"><b>Fix: </b>Change the camera password now, then close the port forward on the router or turn off UPnP.</div></div></div></div>`},
+  privacy:{cap:`It collects <span class="g">nothing</span>`, sub:`Open source · runs on your device`,
+    body:`${barEn}<div class="content">${NODES}<div class="brand" style="font-size:52px">Soor</div><div class="privacy"><div class="ic">🔒</div><h3>Runs entirely on your device</h3><p>No account, no server, no data collection. All its knowledge ships inside it, and anyone can verify this in the open source.</p></div></div>`},
+};
+const params=new URLSearchParams(location.search);
+const EN=params.get('lang')==='en';
+if(EN){document.documentElement.lang='en';document.documentElement.dir='ltr';}
+const sc=(EN?scenesEn:scenes)[params.get('scene')||'home'];
+document.getElementById('shot').innerHTML=`<div class="caption"><h2>${sc.cap}</h2><p>${sc.sub}</p></div><div class="device">${sc.body}</div>`;
+</script>
+</body></html>

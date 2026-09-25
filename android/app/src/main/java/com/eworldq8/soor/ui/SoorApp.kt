@@ -1,4 +1,4 @@
-package info.eworldq8.soor.ui
+package com.eworldq8.soor.ui
 
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -23,10 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import info.eworldq8.soor.R
-import info.eworldq8.soor.engine.*
-import info.eworldq8.soor.scan.ScanState
-import info.eworldq8.soor.scan.ScanViewModel
+import com.eworldq8.soor.R
+import com.eworldq8.soor.engine.*
+import com.eworldq8.soor.scan.ScanState
+import com.eworldq8.soor.scan.ScanViewModel
 
 // The Soor look: Kuwait navy (#0033A0) with a warm gold signal, on a deep field.
 
@@ -323,8 +323,8 @@ private fun AboutSheet(ar: Boolean, onDismiss: () -> Unit) {
             )
             AboutBlock(
                 if (ar) "لا يجمع بياناتك" else "It collects nothing",
-                if (ar) "لا يطلب هذا التطبيق إذن الإنترنت أصلًا، فلا يستطيع أن يرسل شيئًا حتى لو أراد، ومعرفته كلها مشحونة داخله."
-                else "This app does not even request internet permission, so it cannot send anything even if it wanted to, and all its knowledge ships inside it."
+                if (ar) "لا يتصل إلا بعناوين داخل شبكة بيتك، إذ في شيفرته قاعدة ترفض أي عنوان خارجها، ولا حساب فيه ولا خادم، ومعرفته كلها مشحونة داخله."
+                else "It only connects to addresses inside your home network, because a rule in its code refuses any other address. It has no account and no server, and all its knowledge ships inside it."
             )
             AboutBlock(
                 if (ar) "شبكتك وحدها" else "Your network only",

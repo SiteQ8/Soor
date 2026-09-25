@@ -1,0 +1,18 @@
+How many devices are on your home network right now, and which of them is opening a door you know nothing about?
+
+Soor scans your home network the way a penetration tester would. It finds every connected device, reads the ports and services each one leaves open, and reads the router's forwarded-port table to tell a device exposed to the internet from a safe one inside. It then ranks what it found by severity and explains each finding in plain language with a clear fix.
+
+What it checks
+• Every device on the network, and the ports and services it leaves open
+• Router settings, including the UPnP feature that opens ports to the internet without your knowledge
+• Risky ports, such as open debugging on streaming boxes, exposed remote control, and file shares with no password
+• Cameras, warning you about one exposed to the internet and about models that ship with published login details
+• Devices seen on your network for the first time
+
+Defensive, not offensive
+Soor never tries a password on any device and exploits nothing. It reads what devices announce about themselves, and it only ever scans the network your phone is on.
+
+It collects nothing
+Soor runs entirely inside your phone. No account, no server, no data collection, and it only connects to addresses inside your home network. It asks for the internet permission because Android requires it for any network connection, even inside the home. Soor is open source, so anyone can verify all of this.
+
+Arabic and English, free, with no ads and no subscription.

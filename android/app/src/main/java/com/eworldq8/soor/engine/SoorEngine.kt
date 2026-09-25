@@ -1,4 +1,4 @@
-package info.eworldq8.soor.engine
+package com.eworldq8.soor.engine
 
 // The Soor engine, ported to Kotlin from docs/engine/soor.js and kept in step
 // with the Swift port. It takes what a scan already found on the local network

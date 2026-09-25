@@ -2,14 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      Soor deliberately does NOT declare android.permission.INTERNET.
-      Without it the system blocks every socket to anything off the local
-      network, so the app cannot send your data anywhere even if it wanted to.
-      That is the privacy promise enforced by the platform rather than by us.
+      Android requires INTERNET for any network connection at all, including a
+      connection to a device in the same room, so Soor cannot scan a home
+      network without it. What keeps Soor inside the home is not the absence of
+      this permission but LocalOnly: every socket the app opens is checked first
+      and refused unless the address is a private home-network address.
+      LocalOnlyTest proves the rule and fails the build if any connection skips it.
 
-      ACCESS_NETWORK_STATE lets it read which network the phone is on, so it
-      scans only your Wi-Fi and never over mobile data.
+      ACCESS_NETWORK_STATE lets Soor see which network the phone is on, so it
+      scans only Wi-Fi or ethernet and never over mobile data.
+
+      When the app moves to target Android 17 (API 37), local network access
+      will also need the ACCESS_LOCAL_NETWORK runtime permission.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
@@ -23,7 +29,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.Soor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

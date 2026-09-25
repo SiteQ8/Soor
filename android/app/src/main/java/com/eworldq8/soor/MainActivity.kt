@@ -1,4 +1,4 @@
-package info.eworldq8.soor
+package com.eworldq8.soor
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,9 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import info.eworldq8.soor.scan.ScanViewModel
-import info.eworldq8.soor.ui.SoorApp
-import info.eworldq8.soor.ui.Theme
+import com.eworldq8.soor.scan.ScanViewModel
+import com.eworldq8.soor.ui.SoorApp
+import com.eworldq8.soor.ui.Theme
 
 class MainActivity : ComponentActivity() {
     private val vm: ScanViewModel by viewModels()

@@ -1,4 +1,4 @@
-package info.eworldq8.soor.engine
+package com.eworldq8.soor.engine
 
 import org.json.JSONArray
 import org.json.JSONObject

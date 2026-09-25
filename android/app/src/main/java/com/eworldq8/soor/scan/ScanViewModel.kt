@@ -1,9 +1,9 @@
-package info.eworldq8.soor.scan
+package com.eworldq8.soor.scan
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import info.eworldq8.soor.engine.*
+import com.eworldq8.soor.engine.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

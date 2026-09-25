@@ -1,0 +1,1 @@
+See what your home network exposes and how to close it. Collects no data.

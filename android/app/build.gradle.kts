@@ -4,20 +4,35 @@ plugins {
 }
 
 android {
-    namespace = "info.eworldq8.soor"
-    compileSdk = 34
+    namespace = "com.eworldq8.soor"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "info.eworldq8.soor"
+        applicationId = "com.eworldq8.soor"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0"
         resourceConfigurations += listOf("ar", "en")
+    }
+
+    // The upload key is never stored in the repository. A release build reads
+    // it from the environment: a local keystore file, or the CI secret.
+    val keystorePath: String? = System.getenv("SOOR_KEYSTORE")
+    signingConfigs {
+        create("release") {
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("SOOR_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("SOOR_KEY_ALIAS") ?: "soor-upload"
+                keyPassword = System.getenv("SOOR_KEY_PASSWORD") ?: System.getenv("SOOR_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

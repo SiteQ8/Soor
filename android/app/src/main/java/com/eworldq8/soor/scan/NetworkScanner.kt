@@ -1,10 +1,10 @@
-package info.eworldq8.soor.scan
+package com.eworldq8.soor.scan
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkAddress
 import android.net.NetworkCapabilities
-import info.eworldq8.soor.engine.Observation
+import com.eworldq8.soor.engine.Observation
 import java.io.BufferedInputStream
 import java.net.Inet4Address
 import java.net.InetSocketAddress
@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
 //      the internet can be told apart from a safe local one.
 // It exploits nothing. It knocks on doors and reads what is announced.
 //
-// The app holds no INTERNET permission, so these sockets can only reach the
-// local network. That is enforced by the system, not promised by us.
+// Every socket below is opened only after LocalOnly.check approves the address,
+// so the scanner cannot reach anything outside the home network.
 
 data class ScanProgress(val phase: String, val scanned: Int, val total: Int, val found: Int)
 
@@ -63,6 +63,8 @@ class NetworkScanner(private val context: Context) {
                 it.address is Inet4Address && !it.address.isLoopbackAddress
             } ?: return null
             val ip = addr.address.hostAddress ?: return null
+            // a phone holding a public address is not on a home network; do not scan
+            if (!LocalOnly.isAllowed(ip)) return null
             val parts = ip.split(".")
             if (parts.size != 4) return null
             return ip to "${parts[0]}.${parts[1]}.${parts[2]}"
@@ -119,6 +121,7 @@ class NetworkScanner(private val context: Context) {
 
     private fun tryConnect(ip: String, port: Int, timeoutMs: Int): Boolean =
         try {
+            LocalOnly.check(ip)
             Socket().use { s ->
                 s.connect(InetSocketAddress(ip, port), timeoutMs)
                 true
@@ -168,6 +171,7 @@ class NetworkScanner(private val context: Context) {
      */
     private fun readBanner(ip: String, port: Int): String =
         try {
+            LocalOnly.check(ip)
             Socket().use { s ->
                 s.connect(InetSocketAddress(ip, port), CONNECT_TIMEOUT_MS)
                 s.soTimeout = READ_TIMEOUT_MS

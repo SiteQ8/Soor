@@ -268,11 +268,15 @@
   <div class="privacy">
     <div class="ar">
       <h2>لا يجمع بياناتك</h2>
-      <p>سُور يعمل داخل هاتفك بالكامل، فلا حساب ولا خادم لنا ولا يخرج بشيء عنك، ومعرفته كلها مشحونة داخله، كما أن نسخة الأندرويد لا تطلب إذن الإنترنت أصلًا، فلا تستطيع أن ترسل شيئًا حتى لو أرادت، وهذا مفروض ببنية التطبيق لا بوعد في سياسة الخصوصية، ويمكنك التحقق منه بنفسك في الشيفرة المفتوحة.</p>
+      <p>سُور يعمل داخل هاتفك بالكامل، فلا حساب ولا خادم لنا ولا يخرج بشيء عنك، ومعرفته كلها مشحونة داخله، ولا يتصل إلا بعناوين داخل شبكة بيتك، إذ في شيفرته قاعدة ترفض أي عنوان خارجها قبل أن يتصل به، وتُختبر هذه القاعدة آليًا مع كل بناء، ويمكنك أن تتحقق منها بنفسك في الشيفرة المفتوحة.</p>
+    <p class="muted">وتطلب نسخة الأندرويد إذن الإنترنت لأن أندرويد يشترطه لأي اتصال بالشبكة حتى داخل البيت، أما ما يُبقي سُور في بيتك فهو تلك القاعدة لا غياب الإذن.</p>
+    <p><a href="privacy.html">سياسة الخصوصية كاملة</a></p>
     </div>
     <div class="en">
       <h2>It collects nothing</h2>
-      <p>Soor runs entirely inside your phone. No account, no server of ours, and it takes nothing about you out. All its knowledge is shipped inside it. The Android version does not even request internet permission, so it cannot send anything even if it wanted to, and this is enforced by the app's structure rather than promised in a privacy policy, and you can verify it yourself in the open source.</p>
+      <p>Soor runs entirely inside your phone. No account, no server of ours, and it takes nothing about you out. All its knowledge is shipped inside it, and it only ever connects to addresses inside your home network: a rule in its code refuses any other address before connecting, the rule is tested automatically on every build, and you can verify it yourself in the open source.</p>
+    <p class="muted">The Android version asks for the internet permission because Android requires it for any network connection, even inside the home. What keeps Soor in your home is that rule, not the absence of a permission.</p>
+    <p><a href="privacy.html">The full privacy policy</a></p>
     </div>
   </div>
 </section>

@@ -1,4 +1,4 @@
-package info.eworldq8.soor.scan
+package com.eworldq8.soor.scan
 
 import java.io.BufferedInputStream
 import java.net.DatagramPacket
@@ -14,8 +14,9 @@ import java.net.URI
 //
 // Two steps: SSDP multicast discovery to find the IGD control URL on the local
 // network, then SOAP calls to GetGenericPortMappingEntry to walk the forwarded
-// ports. Everything stays on the LAN, over raw sockets, so the app still needs
-// no INTERNET permission.
+// ports. Every request goes through LocalOnly.check, which matters most here:
+// a device could answer discovery with an address on the internet, and the
+// check refuses to follow it.
 
 data class PortMapping(
     val externalPort: Int,
@@ -33,7 +34,7 @@ data class UPnPResult(
 class UPnPClient {
 
     companion object {
-        private const val SSDP_ADDR = "239.255.255.250"
+        private const val SSDP_ADDR = LocalOnly.SSDP_GROUP
         private const val SSDP_PORT = 1900
         private const val DISCOVERY_TIMEOUT_MS = 3000
         private const val HTTP_TIMEOUT_MS = 4000
@@ -68,6 +69,7 @@ class UPnPClient {
         }.toByteArray()
 
         return try {
+            LocalOnly.check(SSDP_ADDR)
             DatagramSocket().use { sock ->
                 sock.soTimeout = DISCOVERY_TIMEOUT_MS
                 sock.send(DatagramPacket(search, search.size, InetAddress.getByName(SSDP_ADDR), SSDP_PORT))
@@ -140,7 +142,7 @@ class UPnPClient {
         return PortMapping(ext, int, tag(xml, "NewInternalClient") ?: "", tag(xml, "NewProtocol") ?: "TCP")
     }
 
-    // MARK: minimal HTTP over raw sockets (LAN only, no INTERNET permission)
+    // MARK: minimal HTTP over raw sockets, home network only (every request passes LocalOnly)
 
     private fun httpGet(url: String): String? = request("GET", url, null, emptyMap())
 
@@ -153,6 +155,8 @@ class UPnPClient {
         return try {
             val uri = URI(url)
             val host = uri.host ?: return null
+            // the address came from a device's reply, so it is not trusted
+            LocalOnly.check(host)
             val port = if (uri.port > 0) uri.port else 80
             val path = (uri.rawPath ?: "/").ifEmpty { "/" } +
                 (uri.rawQuery?.let { "?$it" } ?: "")

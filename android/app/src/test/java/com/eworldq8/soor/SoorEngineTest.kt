@@ -1,6 +1,6 @@
-package info.eworldq8.soor
+package com.eworldq8.soor
 
-import info.eworldq8.soor.engine.*
+import com.eworldq8.soor.engine.*
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
