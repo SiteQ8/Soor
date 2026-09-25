@@ -3,89 +3,142 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>سُور، سياسة الخصوصية | Soor, privacy policy</title>
-<meta name="description" content="سياسة خصوصية تطبيق سُور، الذي لا يجمع أي بيانات ولا يتصل إلا بشبكة بيتك.">
+<title>سُور، سياسة الخصوصية</title>
+<meta name="description" content="سُور لا يجمع أي بيانات، فلا حساب ولا خادم ولا تحليلات ولا إعلانات، ولا يتصل إلا بعناوين داخل شبكة بيتك.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<style>
-  .policy { max-inline-size: 760px; margin-inline: auto; padding: 40px var(--gutter) 80px; }
-  .policy h1 { font-size: clamp(1.7rem, 5vw, 2.3rem); margin-block-end: 6px; }
-  .policy h2 { font-size: 1.15rem; margin-block: 30px 10px; }
-  .policy p, .policy li { color: var(--ink-2); line-height: 1.85; }
-  .policy ul { padding-inline-start: 20px; display: grid; gap: 6px; }
-  .policy .date { color: var(--ink-2); font-size: 0.9rem; }
-  .policy .back { display: inline-block; margin-block-end: 24px; color: var(--line); text-decoration: none; }
-  .policy hr { border: 0; border-block-start: 1px solid var(--rule); margin-block: 48px; }
-</style>
 </head>
-<body>
+<body class="policy-page">
+
+<header class="bar">
+  <a class="brand" href="./">
+    <img src="assets/logo.svg" alt="" width="30" height="30">
+    <b>سُور</b>
+  </a>
+  <span class="spacer"></span>
+  <a class="p-home" href="./"><span class="ar">الصفحة الرئيسية</span><span class="en">Home</span></a>
+  <button class="langtoggle" id="lang" type="button">English</button>
+</header>
+
 <main class="policy">
-  <a class="back" href="./">soor.3li.info</a>
 
-  <section lang="ar" dir="rtl">
-    <h1>سياسة الخصوصية</h1>
-    <p class="date">آخر تحديث: 25 سبتمبر 2026</p>
+  <section class="p-hero">
+    <div class="ar">
+      <span class="p-eyebrow">سياسة الخصوصية</span>
+      <h1>سُور لا يجمع أي بيانات</h1>
+      <p class="p-lede">لا حساب فيه ولا خادم له ولا أدوات تحليل ولا إعلانات، وكل ما يفعله يجري داخل هاتفك، وهذه الصفحة تشرح ذلك بالتفصيل.</p>
+      <p class="p-date">آخر تحديث: 25 سبتمبر 2026</p>
+    </div>
+    <div class="en">
+      <span class="p-eyebrow">Privacy policy</span>
+      <h1>Soor collects no data</h1>
+      <p class="p-lede">No account, no server, no analytics and no ads. Everything it does happens inside your phone, and this page explains exactly how.</p>
+      <p class="p-date">Last updated: 25 September 2026</p>
+    </div>
+  </section>
 
-    <h2>الخلاصة</h2>
-    <p>سُور لا يجمع أي بيانات عنك ولا عن شبكتك، فلا حساب فيه ولا خادم له ولا أدوات تحليل ولا إعلانات، وكل ما يفعله يجري داخل هاتفك.</p>
+  <div class="p-facts">
+    <div class="p-fact">
+      <span class="p-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 3l18 18"/></svg></span>
+      <b class="ar">لا حساب</b><b class="en">No account</b>
+      <span class="ar">لا تسجيل ولا بريد ولا رقم هاتف</span><span class="en">No sign up, no email, no phone number</span>
+    </div>
+    <div class="p-fact">
+      <span class="p-ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M3 3l18 18"/></svg></span>
+      <b class="ar">لا خادم</b><b class="en">No server</b>
+      <span class="ar">لا يرسل شيئًا إلى أي مكان</span><span class="en">It sends nothing anywhere</span>
+    </div>
+    <div class="p-fact">
+      <span class="p-ic"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M3 3l18 18"/></svg></span>
+      <b class="ar">لا تحليلات ولا إعلانات</b><b class="en">No analytics, no ads</b>
+      <span class="ar">لا مكتبة تتبّع من أي طرف</span><span class="en">No tracking library of any kind</span>
+    </div>
+    <div class="p-fact">
+      <span class="p-ic"><svg viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20H4z"/><path d="M9.5 20v-5h5v5"/></svg></span>
+      <b class="ar">داخل بيتك فقط</b><b class="en">Your home only</b>
+      <span class="ar">لا يتصل بعنوان خارج شبكتك</span><span class="en">It connects to nothing outside your network</span>
+    </div>
+  </div>
 
-    <h2>ماذا يفعل التطبيق</h2>
-    <p>يفحص الشبكة المتصل بها هاتفك، فيتصل بالأجهزة داخلها ويقرأ ما تعلنه خدماتها عن نفسها، ويقرأ جدول المنافذ في الراوتر، ثم يعرض النتائج على شاشتك، ولا يجرّب كلمة مرور على أي جهاز ولا يستغل ثغرة.</p>
+  <section class="p-card">
+    <h2><span class="p-num">1</span><span class="ar">ماذا يفعل التطبيق</span><span class="en">What the app does</span></h2>
+    <p class="ar">يفحص الشبكة المتصل بها هاتفك، فيتصل بالأجهزة داخلها ويقرأ ما تعلنه خدماتها عن نفسها، ويقرأ جدول المنافذ في الراوتر، ثم يعرض النتائج على شاشتك، ولا يجرّب كلمة مرور على أي جهاز ولا يستغل ثغرة.</p>
+    <p class="en">It scans the network your phone is on: it connects to the devices on it and reads what their services announce about themselves, reads the router's port table, and shows the results on your screen. It never tries a password on any device and exploits nothing.</p>
+  </section>
 
-    <h2>البيانات</h2>
-    <ul>
+  <section class="p-card">
+    <h2><span class="p-num">2</span><span class="ar">البيانات</span><span class="en">Data</span></h2>
+    <ul class="p-list ar">
       <li>لا يجمع التطبيق بيانات شخصية ولا يرسل شيئًا إلى أي خادم</li>
       <li>نتائج الفحص تبقى في ذاكرة الهاتف ما دام التطبيق مفتوحًا، ثم تُمحى عند إغلاقه</li>
       <li>إذا اخترت أنت مشاركة التقرير فإنه يُرسل بالوسيلة التي تختارها من نافذة المشاركة في هاتفك، ولا يصلنا منه شيء</li>
     </ul>
-
-    <h2>الاتصالات والأذونات</h2>
-    <p>لا يتصل سُور إلا بعناوين داخل شبكة بيتك، لأن في شيفرته قاعدة ترفض أي عنوان خارجها قبل الاتصال به، ولا يطلب في الأندرويد إلا إذنين، أولهما إذن الإنترنت الذي يشترطه أندرويد لأي اتصال بالشبكة حتى داخل البيت، وثانيهما إذن معرفة حالة الشبكة ليفحص عبر الواي فاي وحده لا عبر بيانات الجوال، أما في الآيفون فيطلب إذن الشبكة المحلية.</p>
-
-    <h2>الأطفال</h2>
-    <p>التطبيق أداة أمان لشبكة البيت وليس موجهًا للأطفال، ولا يجمع بيانات من أي أحد.</p>
-
-    <h2>الشيفرة المفتوحة</h2>
-    <p>شيفرة سُور مفتوحة المصدر، فيمكن لأي أحد أن يتحقق من كل ما في هذه الصفحة بنفسه في <a href="https://github.com/SiteQ8/Soor">github.com/SiteQ8/Soor</a>.</p>
-
-    <h2>التواصل</h2>
-    <p>لأي سؤال عن هذه السياسة راسلنا على <a href="mailto:site@hotmail.com">site@hotmail.com</a>، وإذا تغيّرت السياسة يومًا فسننشر التغيير في هذه الصفحة مع تاريخه.</p>
-  </section>
-
-  <hr>
-
-  <section lang="en" dir="ltr">
-    <h1>Privacy policy</h1>
-    <p class="date">Last updated: 25 September 2026</p>
-
-    <h2>In short</h2>
-    <p>Soor collects no data about you or your network. It has no account, no server, no analytics and no ads, and everything it does happens inside your phone.</p>
-
-    <h2>What the app does</h2>
-    <p>It scans the network your phone is on: it connects to the devices on it and reads what their services announce about themselves, reads the router's port table, and shows the results on your screen. It never tries a password on any device and exploits nothing.</p>
-
-    <h2>Data</h2>
-    <ul>
+    <ul class="p-list en">
       <li>The app collects no personal data and sends nothing to any server</li>
       <li>Scan results stay in the phone's memory while the app is open and are erased when it closes</li>
       <li>If you choose to share a report, it goes through whatever you pick in your phone's share sheet, and nothing reaches us</li>
     </ul>
-
-    <h2>Connections and permissions</h2>
-    <p>Soor only connects to addresses inside your home network: a rule in its code refuses any other address before connecting. On Android it asks for two permissions only: internet access, which Android requires for any network connection even inside the home, and network state, so it scans over Wi-Fi only and never over mobile data. On iPhone it asks for local network access.</p>
-
-    <h2>Children</h2>
-    <p>The app is a home network security tool and is not directed at children, and it collects no data from anyone.</p>
-
-    <h2>Open source</h2>
-    <p>Soor is open source, so anyone can verify everything on this page at <a href="https://github.com/SiteQ8/Soor">github.com/SiteQ8/Soor</a>.</p>
-
-    <h2>Contact</h2>
-    <p>For any question about this policy, write to <a href="mailto:site@hotmail.com">site@hotmail.com</a>. If the policy ever changes, the change and its date will be published on this page.</p>
   </section>
+
+  <section class="p-card">
+    <h2><span class="p-num">3</span><span class="ar">الاتصالات والأذونات</span><span class="en">Connections and permissions</span></h2>
+    <p class="ar">لا يتصل سُور إلا بعناوين داخل شبكة بيتك، لأن في شيفرته قاعدة يمر بها كل اتصال قبل أن يحدث فترفض أي عنوان خارجها، ولا تقبل أسماء النطاقات أصلًا فلا يسأل خادمًا خارجيًا عن أي اسم.</p>
+    <p class="en">Soor only connects to addresses inside your home network. Every connection passes a rule in its code before it is made, and the rule refuses any address outside the network and accepts no domain names at all, so Soor never asks an outside server to look anything up.</p>
+
+    <div class="p-perms">
+      <div class="p-perm">
+        <span class="p-os">Android</span>
+        <code>INTERNET</code>
+        <span class="ar">يشترطه أندرويد لأي اتصال بالشبكة، حتى بجهاز في الغرفة نفسها</span>
+        <span class="en">Android requires it for any network connection, even to a device in the same room</span>
+      </div>
+      <div class="p-perm">
+        <span class="p-os">Android</span>
+        <code>ACCESS_NETWORK_STATE</code>
+        <span class="ar">ليفحص عبر الواي فاي وحده، ولا يفحص أبدًا عبر بيانات الجوال</span>
+        <span class="en">So it scans over Wi-Fi only and never over mobile data</span>
+      </div>
+      <div class="p-perm">
+        <span class="p-os">iPhone</span>
+        <code class="ar">الشبكة المحلية</code><code class="en">Local Network</code>
+        <span class="ar">ليصل إلى الأجهزة المتصلة بشبكة بيتك</span>
+        <span class="en">So it can reach the devices on your home network</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="p-card">
+    <h2><span class="p-num">4</span><span class="ar">الأطفال</span><span class="en">Children</span></h2>
+    <p class="ar">التطبيق أداة أمان لشبكة البيت وليس موجهًا للأطفال، ولا يجمع بيانات من أي أحد.</p>
+    <p class="en">The app is a home network security tool and is not directed at children, and it collects no data from anyone.</p>
+  </section>
+
+  <section class="p-card">
+    <h2><span class="p-num">5</span><span class="ar">الشيفرة المفتوحة</span><span class="en">Open source</span></h2>
+    <p class="ar">شيفرة سُور مفتوحة المصدر، فيمكن لأي أحد أن يتحقق من كل ما في هذه الصفحة بنفسه.</p>
+    <p class="en">Soor is open source, so anyone can verify everything on this page for themselves.</p>
+    <a class="p-btn" href="https://github.com/SiteQ8/Soor">github.com/SiteQ8/Soor</a>
+  </section>
+
+  <section class="p-card">
+    <h2><span class="p-num">6</span><span class="ar">التواصل</span><span class="en">Contact</span></h2>
+    <p class="ar">لأي سؤال عن هذه السياسة راسلنا، وإذا تغيّرت يومًا فسننشر التغيير في هذه الصفحة مع تاريخه.</p>
+    <p class="en">For any question about this policy, write to us. If it ever changes, the change and its date will be published on this page.</p>
+    <a class="p-btn" href="mailto:site@hotmail.com">site@hotmail.com</a>
+  </section>
+
 </main>
+
+<footer>
+  <span class="ar">سُور، مشروع مفتوح المصدر من SiteQ8</span>
+  <span class="en">Soor, an open source project by SiteQ8</span>
+  <span class="spacer"></span>
+  <a href="https://github.com/SiteQ8/Soor">GitHub</a>
+</footer>
+
+<script src="app.js"></script>
 </body>
 </html>

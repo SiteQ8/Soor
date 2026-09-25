@@ -549,3 +549,89 @@ h1, h2, h3, p, li { overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
   .pipeline::after { animation: none; display: none; }
 }
+
+/* ---- Privacy page ----
+   A page of the site, not a bare document: the same header and language
+   toggle, the policy stated in one line, the key facts up front, and each
+   section in its own card. */
+.policy-page .bar .brand { text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 10px; }
+.p-home { color: var(--ink-2); text-decoration: none; font-size: 0.92rem; padding: 6px 12px; border-radius: 8px; }
+.p-home:hover { background: var(--line-soft); color: var(--ink); }
+
+.policy { max-inline-size: 880px; margin-inline: auto; padding: 8px var(--gutter) 64px; }
+/* the home page spaces its sections generously; a policy reads as one document */
+.policy section { margin-block: 0; }
+.policy .p-card { margin-block: 0 14px; }
+
+.p-hero { padding-block: 44px 30px; text-align: center; }
+.p-eyebrow {
+  display: inline-block; font-size: 0.82rem; font-weight: 600; color: var(--signal);
+  border: 1px solid color-mix(in oklab, var(--signal) 45%, var(--rule));
+  border-radius: 999px; padding: 5px 14px; margin-block-end: 18px;
+}
+.p-hero h1 { font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.15; color: var(--ink); margin: 0; }
+.p-lede { color: var(--ink-2); font-size: 1.08rem; line-height: 1.85; max-inline-size: 52ch; margin: 18px auto 0; }
+.p-date { color: var(--ink-2); font-size: 0.84rem; margin: 14px auto 0; opacity: 0.8; max-inline-size: none; }
+
+.p-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-block-end: 34px; }
+.p-fact {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 16px;
+  padding: 18px 14px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+}
+.p-fact b { color: var(--ink); font-size: 0.98rem; }
+.p-fact > span:not(.p-ic) { color: var(--ink-2); font-size: 0.82rem; line-height: 1.6; }
+.p-ic {
+  inline-size: 48px; block-size: 48px; border-radius: 50%; display: grid; place-items: center; margin-block-end: 6px;
+  background: color-mix(in oklab, var(--navy) 24%, transparent); border: 1px solid color-mix(in oklab, var(--navy-lite) 45%, var(--rule));
+}
+.p-ic svg { inline-size: 24px; block-size: 24px; fill: none; stroke: var(--signal); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.p-card {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 18px;
+  padding: 22px 24px; margin-block-end: 14px;
+}
+.p-card h2 { display: flex; align-items: center; gap: 12px; font-size: 1.12rem; color: var(--ink); margin: 0 0 12px; }
+.p-num {
+  inline-size: 30px; block-size: 30px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: var(--navy); color: #fff; font-family: var(--mono); font-size: 0.82rem; font-weight: 700;
+}
+.p-card p { color: var(--ink-2); line-height: 1.9; margin: 0; }
+.p-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.p-list li { position: relative; padding-inline-start: 22px; color: var(--ink-2); line-height: 1.8; }
+.p-list li::before {
+  content: ""; position: absolute; inset-inline-start: 2px; inset-block-start: 0.72em;
+  inline-size: 8px; block-size: 8px; border-radius: 50%; background: var(--signal);
+}
+
+.p-perms { display: grid; gap: 10px; margin-block-start: 18px; }
+.p-perm {
+  display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 12px;
+  background: var(--bg-2); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px;
+}
+.p-perm > span:last-child, .p-perm > span.ar, .p-perm > span.en { color: var(--ink-2); font-size: 0.9rem; line-height: 1.6; }
+.p-os {
+  font-size: 0.72rem; font-weight: 600; color: var(--navy-lite);
+  border: 1px solid color-mix(in oklab, var(--navy-lite) 45%, var(--rule)); border-radius: 999px; padding: 2px 10px;
+}
+.p-perm code {
+  font-family: var(--mono); font-size: 0.8rem; color: var(--ink);
+  background: var(--line-soft); border-radius: 6px; padding: 3px 8px; direction: ltr; unicode-bidi: isolate;
+}
+.p-perm code.ar { font-family: inherit; direction: rtl; }
+
+.p-btn {
+  display: inline-flex; align-items: center; margin-block-start: 14px; min-block-size: 40px;
+  padding: 9px 16px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 600;
+  color: var(--ink); background: color-mix(in oklab, var(--navy) 22%, transparent);
+  border: 1px solid color-mix(in oklab, var(--navy-lite) 45%, var(--rule)); direction: ltr;
+}
+.p-btn:hover { background: color-mix(in oklab, var(--navy) 36%, transparent); }
+
+@media (max-width: 760px) {
+  .p-hero { padding-block: 34px 24px; }
+  .p-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .p-card { padding: 18px; }
+  .p-perm { grid-template-columns: auto 1fr; }
+  .p-perm > span:last-child, .p-perm > span.ar, .p-perm > span.en { grid-column: 1 / -1; }
+  .p-home { display: none; }
+}
