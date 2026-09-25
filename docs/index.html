@@ -32,8 +32,7 @@
   </span>
   <span class="spacer"></span>
   <nav>
-    <a href="#live"><span class="ar">شاهده</span><span class="en">Watch</span></a>
-    <a href="#demo"><span class="ar">جرّبه</span><span class="en">Demo</span></a>
+    <a href="#lab"><span class="ar">جرّبه</span><span class="en">Try it</span></a>
     <a href="#how"><span class="ar">كيف يعمل</span><span class="en">How</span></a>
     <a href="#camera"><span class="ar">الكاميرات</span><span class="en">Cameras</span></a>
     <a href="#privacy"><span class="ar">الخصوصية</span><span class="en">Privacy</span></a>
@@ -54,7 +53,7 @@
       <p class="lede">It finds every device on your network and reads the ports each one leaves open, tells what is exposed to the internet from what is safe inside, then ranks what it found by severity with a clear fix for each. It runs inside your phone, with no account, no server, and no data collection.</p>
     </div>
     <div class="cta">
-      <a class="btn primary" href="#demo"><span class="ar">شاهد نتيجة فحص</span><span class="en">See a scan result</span></a>
+      <a class="btn primary" href="#lab"><span class="ar">جرّب الفحص</span><span class="en">Try the scan</span></a>
       <a class="btn" href="https://github.com/SiteQ8/Soor"><span class="ar">الشيفرة المصدرية</span><span class="en">Source code</span></a>
     </div>
   </main>
@@ -89,47 +88,36 @@
   </div>
 </section>
 
-<section id="live">
+<section id="lab">
   <div class="ar">
-    <h2>شاهد الفحص وهو يجري</h2>
-    <p class="muted">السور في الأعلى يفصل بيتك عن الإنترنت، فراقب الرادار وهو يكتشف الأجهزة، ثم يطرق منافذها، ثم يقرأ جدول الراوتر، فترى المنفذ الممرَّر يخترق السور، أما النتائج في الأسفل فيحسبها محرك سُور نفسه لحظة ظهورها.</p>
+    <h2>افحص بيتًا، ثم أصلحه</h2>
+    <p class="muted">اختر بيتًا وشاهد سُور يكتشف أجهزته ويطرق منافذها ويقرأ جدول الراوتر، ثم اضغط أي جهاز لترى ما يفتحه ولماذا يهم، وطبّق الحل فيعيد المحرك حكمه وترى السور يُرمَّم أمامك، علمًا أن البيت هنا افتراضي لأن صفحة الويب لا تفحص شبكتك، لكنّ كل حكم تراه يحسبه محرك سُور الحقيقي نفسه.</p>
   </div>
   <div class="en">
-    <h2>Watch the scan run</h2>
-    <p class="muted">The wall at the top separates your home from the internet. Watch the radar find the devices, knock on their ports, then read the router's table, and see the forwarded port punch through the wall. The findings below are computed by the Soor engine itself as they appear.</p>
+    <h2>Scan a home, then fix it</h2>
+    <p class="muted">Pick a home and watch Soor find its devices, knock on their ports and read the router's table. Then tap any device to see what it opens and why it matters, apply the fix, and watch the engine judge again as the wall seals in front of you. The home is hypothetical, because a web page cannot scan your network, but every verdict you see is computed by the real Soor engine.</p>
   </div>
 
-  <div id="scanmap" class="scanmap">
-    <div class="map"><canvas></canvas></div>
-    <div class="readout">
-      <div class="log" data-log></div>
-      <div class="stats" data-stats></div>
+  <div id="soorlab" class="lab" data-phase="idle">
+    <div class="lab-bar">
+      <div class="lab-homes" role="tablist" data-homes></div>
+      <div class="lab-tools">
+        <button type="button" class="lab-reset" data-reset hidden></button>
+        <button type="button" class="lab-rescan" data-rescan disabled></button>
+      </div>
     </div>
-    <div class="verdict" data-verdict></div>
-    <button class="replay" data-replay hidden>
-      <span class="ar">أعد العرض</span><span class="en">Replay</span>
-    </button>
-  </div>
-</section>
-
-<section id="demo">
-  <div class="ar">
-    <h2>جرّبه</h2>
-    <p class="muted">صفحة الويب لا تفحص شبكتك، لكنها تشغّل محرك سُور نفسه على نتائج فحص واقعية لتريك ما يعرضه التطبيق تمامًا، فاختر مشهدًا.</p>
-  </div>
-  <div class="en">
-    <h2>Try it</h2>
-    <p class="muted">A web page cannot scan your network, but it runs the same Soor engine on realistic scan results to show you exactly what the app displays. Pick a scenario.</p>
-  </div>
-
-  <div class="console">
-    <div class="head">
-      <span class="dot live"></span>
-      <span class="mono">soor · engine demo</span>
+    <div class="lab-body">
+      <div class="lab-stage">
+        <canvas aria-hidden="true"></canvas>
+        <div class="lab-log" data-log aria-live="polite"></div>
+      </div>
+      <aside class="lab-panel" aria-live="polite">
+        <div class="lab-status" data-status></div>
+        <div class="lab-pills" data-pills></div>
+        <div class="lab-inspector" data-inspector></div>
+      </aside>
     </div>
-    <div class="controls" id="scenarios"></div>
-    <div class="summary" id="summary"></div>
-    <div class="body" id="findings"></div>
+    <div class="lab-devices" data-devices></div>
   </div>
 </section>
 
@@ -196,6 +184,6 @@
 <script src="engine/soor.js"></script>
 <script src="engine/report.js"></script>
 <script src="app.js"></script>
-<script src="scan-viz.js"></script>
+<script src="lab.js"></script>
 </body>
 </html>
