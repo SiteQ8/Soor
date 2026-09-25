@@ -120,6 +120,7 @@
     document.documentElement.lang = next;
     document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
     document.getElementById("lang").textContent = next === "ar" ? "English" : "العربية";
+    document.dispatchEvent(new CustomEvent("soor:lang", { detail: next }));
     document.querySelector('meta[name="theme-color"]');
     if (knowledge) buildControls();
   }

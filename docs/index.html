@@ -32,6 +32,7 @@
   </span>
   <span class="spacer"></span>
   <nav>
+    <a href="#live"><span class="ar">شاهده</span><span class="en">Watch</span></a>
     <a href="#demo"><span class="ar">جرّبه</span><span class="en">Demo</span></a>
     <a href="#how"><span class="ar">كيف يعمل</span><span class="en">How</span></a>
     <a href="#camera"><span class="ar">الكاميرات</span><span class="en">Cameras</span></a>
@@ -85,6 +86,29 @@
       <p class="ar">جهاز ظهر على شبكتك لأول مرة، لتتأكد أنك تعرفه.</p>
       <p class="en">A device seen on your network for the first time, so you can be sure you recognise it.</p>
     </div>
+  </div>
+</section>
+
+<section id="live">
+  <div class="ar">
+    <h2>شاهد الفحص وهو يجري</h2>
+    <p class="muted">السور في الأعلى يفصل بيتك عن الإنترنت، فراقب الرادار وهو يكتشف الأجهزة، ثم يطرق منافذها، ثم يقرأ جدول الراوتر، فترى المنفذ الممرَّر يخترق السور، أما النتائج في الأسفل فيحسبها محرك سُور نفسه لحظة ظهورها.</p>
+  </div>
+  <div class="en">
+    <h2>Watch the scan run</h2>
+    <p class="muted">The wall at the top separates your home from the internet. Watch the radar find the devices, knock on their ports, then read the router's table, and see the forwarded port punch through the wall. The findings below are computed by the Soor engine itself as they appear.</p>
+  </div>
+
+  <div id="scanmap" class="scanmap">
+    <div class="map"><canvas></canvas></div>
+    <div class="readout">
+      <div class="log" data-log></div>
+      <div class="stats" data-stats></div>
+    </div>
+    <div class="verdict" data-verdict></div>
+    <button class="replay" data-replay hidden>
+      <span class="ar">أعد العرض</span><span class="en">Replay</span>
+    </button>
   </div>
 </section>
 
@@ -172,5 +196,6 @@
 <script src="engine/soor.js"></script>
 <script src="engine/report.js"></script>
 <script src="app.js"></script>
+<script src="scan-viz.js"></script>
 </body>
 </html>
