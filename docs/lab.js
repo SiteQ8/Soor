@@ -107,15 +107,20 @@
     }
   };
 
-  /* ---------- the homes ---------- */
+  /* ---------- the homes ----------
+     Named by the state of the network, on one axis from worst to best, never by
+     who lives there or what gadgets it has, since any home can be both. Each
+     name matches the status the scan ends on: exposed to the internet (a breach
+     in the wall), open on the inside (the wall holds, a door inside does not),
+     and nearly fortified (only things worth reviewing). */
 
   var ROUTER_WEB = { port: 80, httpServer: "Router Webserver", banner: "WWW-Authenticate: Basic realm" };
   var UPNP = { port: 1900, banner: "UPnP/1.1 IGD rootDevice" };
 
   var HOMES = [
     {
-      id: "family",
-      name: { ar: "بيت عائلي", en: "Family home" },
+      id: "exposed",
+      name: { ar: "بيت مكشوف للإنترنت", en: "Exposed to the internet" },
       devices: [
         { id: "router", kind: "router", hub: true, ip: "192.168.1.1",
           name: { ar: "الراوتر", en: "Router" },
@@ -140,8 +145,8 @@
       ]
     },
     {
-      id: "smart",
-      name: { ar: "بيت ذكي", en: "Smart home" },
+      id: "inside",
+      name: { ar: "بيت مفتوح من الداخل", en: "Open on the inside" },
       devices: [
         { id: "router", kind: "router", hub: true, ip: "192.168.1.1",
           name: { ar: "الراوتر", en: "Router" },
@@ -165,8 +170,8 @@
       ]
     },
     {
-      id: "flat",
-      name: { ar: "شقة صغيرة", en: "Small flat" },
+      id: "nearly",
+      name: { ar: "بيت شبه محصّن", en: "Nearly fortified" },
       devices: [
         { id: "router", kind: "router", hub: true, ip: "192.168.1.1",
           name: { ar: "الراوتر", en: "Router" },
@@ -228,7 +233,7 @@
   var SEV_ORDER = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
   var SWEEP_FROM = -196 * Math.PI / 180, SWEEP_TO = 16 * Math.PI / 180;
 
-  var knowledge = null, home = null, homeId = "family";
+  var knowledge = null, home = null, homeId = "exposed";
   var nodes = [], findings = [], breaches = [], particles = [];
   var selected = null, hovered = null, autoPicked = null, lastChange = null;
   var phase = "idle", sweep = 0;

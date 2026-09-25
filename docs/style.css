@@ -430,8 +430,10 @@ h1, h2, h3, p, li { overflow-wrap: anywhere; }
   .lab-body { grid-template-columns: 1fr; }
   .lab-stage { border-inline-end: 0; border-block-end: 1px solid var(--rule); }
   .lab-bar { padding: 10px; }
-  .lab-homes { inline-size: 100%; }
-  .lab-homes button { flex: 1 1 auto; padding: 8px 10px; font-size: 0.84rem; }
+  /* three equal parts, each label free to wrap inside its own button, so the
+     control stays balanced instead of leaving one tab alone on a second line */
+  .lab-homes { inline-size: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lab-homes button { padding: 7px 6px; font-size: 0.8rem; line-height: 1.35; border-radius: 12px; }
   .lab-tools { inline-size: 100%; }
   .lab-tools button { flex: 1 1 auto; }
   .lab-log { font-size: 0.72rem; }
