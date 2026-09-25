@@ -97,8 +97,9 @@ a:hover { color: var(--signal); }
 /* Top bar */
 .bar {
   position: sticky; top: 0; z-index: 20;
-  height: var(--bar-h);
-  display: flex; align-items: center; gap: 14px;
+  min-block-size: var(--bar-h);
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  inline-size: 100%; max-inline-size: 100%;
   padding-inline: var(--gutter);
   padding-top: env(safe-area-inset-top, 0px);
   background: color-mix(in oklab, var(--bg) 88%, transparent);
@@ -109,7 +110,8 @@ a:hover { color: var(--signal); }
 .bar .brand img { inline-size: 30px; block-size: 30px; }
 .bar .brand b { font-size: 1.2rem; font-family: var(--display); }
 .bar .spacer { flex: 1; }
-.bar nav { display: flex; gap: 4px; }
+.bar nav { display: flex; gap: 4px; flex-wrap: nowrap; min-inline-size: 0; }
+.bar nav a { white-space: nowrap; }
 .bar nav a {
   padding: 6px 12px; border-radius: 8px; font-size: 0.92rem; color: var(--ink-2);
   text-decoration: none;
@@ -276,4 +278,45 @@ th { color: var(--ink-2); font-weight: 600; font-size: 0.85rem; }
 @media (prefers-reduced-motion: no-preference) {
   .finding { animation: rise 0.35s ease both; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}
+
+/* ---- Mobile ----
+   The top bar used to hold the brand, four section links and the language
+   toggle in one fixed-height row. On a phone that is wider than the screen, so
+   the nav wrapped and the page scrolled sideways. Below a tablet width the
+   section links are hidden (the sections are a scroll away) and everything is
+   clamped so nothing can push the page wider than the viewport. */
+html, body { max-inline-size: 100%; overflow-x: hidden; }
+
+h1, h2, h3, p, li { overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  :root { --gutter: 16px; }
+
+  .bar { gap: 10px; }
+  .bar nav { display: none; }
+  .bar .brand b { font-size: 1.05rem; }
+  .langtoggle { padding: 6px 10px; font-size: 0.85rem; }
+
+  .hero { padding-block: 28px 36px; }
+  h1 { font-size: clamp(1.6rem, 7.5vw, 2.2rem); line-height: 1.25; }
+  .lede, p { font-size: 0.98rem; }
+  .cta { gap: 10px; }
+  .btn { flex: 1 1 auto; justify-content: center; }
+
+  main { padding-inline: var(--gutter); }
+  section { margin-block: 40px; }
+
+  .grid { grid-template-columns: 1fr; }
+  .console .controls { gap: 6px; }
+  .console .controls button { font-size: 0.82rem; padding: 6px 10px; }
+  .finding { margin: 8px; padding: 14px; }
+  .finding .addr { margin-inline-start: 0; }
+  .finding .row { gap: 8px; }
+  .step { grid-template-columns: 1fr; gap: 10px; }
+}
+
+@media (max-width: 380px) {
+  .bar .brand b { font-size: 1rem; }
+  .btn { inline-size: 100%; }
 }
