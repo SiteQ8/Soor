@@ -2,3 +2,5 @@ node_modules/
 .gh_token
 *.log
 .DS_Store
+__pycache__/
+*.pyc
