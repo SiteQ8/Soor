@@ -33,6 +33,7 @@
   <span class="spacer"></span>
   <nav>
     <a href="#lab"><span class="ar">جرّبه</span><span class="en">Try it</span></a>
+    <a href="#engines"><span class="ar">محركات الفحص</span><span class="en">Scanners</span></a>
     <a href="#how"><span class="ar">كيف يعمل</span><span class="en">How</span></a>
     <a href="#camera"><span class="ar">الكاميرات</span><span class="en">Cameras</span></a>
     <a href="#privacy"><span class="ar">الخصوصية</span><span class="en">Privacy</span></a>
@@ -121,6 +122,110 @@
   </div>
 </section>
 
+<section id="engines" class="engines">
+  <div class="ar">
+    <h2>شودان وأمثاله</h2>
+    <p class="lede">شودان محرك بحث أطلقه جون ماذرلي عام 2009، لكنه لا يفهرس صفحات المواقع كما يفعل جوجل، بل يفهرس الأجهزة المتصلة بالإنترنت نفسها، كالراوترات والكاميرات والخوادم وأجهزة التخزين وأنظمة التحكم الصناعية، فيسجّل ما يعلنه كل جهاز عن نفسه ويتيحه لكل من يبحث.</p>
+
+    <h3 class="eng-h">كيف يعمل</h3>
+    <ol class="pipeline">
+      <li><b>يختار عنوانًا ومنفذًا</b><span>تعمل ماسحاته على مدار الساعة من مواقع كثيرة حول العالم، فيختار كل منها عنوانًا عشوائيًا على الإنترنت ومنفذًا عشوائيًا.</span></li>
+      <li><b>يتصل بالجهاز</b><span>يحاول الاتصال بذلك المنفذ، فإن أجاب جهاز عرف أن فيه خدمة مفتوحة للإنترنت.</span></li>
+      <li><b>يسجّل ما يعلنه</b><span>يحفظ الرسالة التي تعرّف بها الخدمة نفسها، وفيها غالبًا اسم الجهاز وطرازه ونسخة برنامجه.</span></li>
+      <li><b>يتيحه للبحث</b><span>يضيف ما سجّله إلى فهرس يبحث فيه أي أحد بحسب الدولة أو نوع الجهاز أو المنفذ، ثم يعيد الكرّة حتى يمرّ على الإنترنت كله مرة في الأسبوع على الأقل.</span></li>
+    </ol>
+
+    <h3 class="eng-h">حقائق بالأرقام</h3>
+    <div class="facts">
+      <div class="fact"><b>5 دقائق</b><p>تكفي لتصل أغلب الماسحات المعروفة إلى أي جهاز جديد يتصل بالإنترنت، بحسب قياس أجرته GreyNoise عام 2024.</p><a href="https://www.greynoise.io/blog/checking-it-twice-profiling-benign-internet-scanners----2024-edition" rel="noopener">المصدر</a></div>
+      <div class="fact"><b>45 دقيقة</b><p>يحتاجها حاسوب واحد ليفحص عناوين الإنترنت كلها على منفذ واحد، وتنزل إلى نحو خمس دقائق باتصال أسرع، كما أثبت باحثو جامعة ميشيغان عام 2013.</p><a href="https://zmap.io/paper.pdf" rel="noopener">المصدر</a></div>
+      <div class="fact"><b>كل أسبوع</b><p>يمرّ شودان على الإنترنت كله مرة على الأقل، بينما تعمل ماسحاته دون توقف.</p><a href="https://help.shodan.io/mastery/data_timeline" rel="noopener">المصدر</a></div>
+      <div class="fact"><b>24 ساعة</b><p>تكفي لتظهر التغييرات في نتائج شودان وCensys بعد رصدها، بحسب دراسة علمية نُشرت عام 2021.</p><a href="https://www.ndss-symposium.org/wp-content/uploads/madweb2021_23009_paper.pdf" rel="noopener">المصدر</a></div>
+      <div class="fact"><b>62</b><p>زوجًا فقط من أسماء المستخدمين وكلمات المرور الافتراضية كانت كل ما احتاجه ميراي عام 2016 ليسيطر على مئات الآلاف من الكاميرات والراوترات.</p><a href="https://www.cisa.gov/news-events/alerts/2016/10/14/heightened-ddos-threat-posed-mirai-and-other-botnets" rel="noopener">المصدر</a></div>
+      <div class="fact"><b>73,000</b><p>كاميرا في 152 دولة بثّها موقع واحد عام 2014 لأن أصحابها لم يغيّروا كلمة مرور المصنع، وبقي أكثر من ألفين منها متاحًا حتى عام 2025.</p><a href="https://en.wikipedia.org/wiki/Insecam" rel="noopener">المصدر</a></div>
+    </div>
+
+    <h3 class="eng-h">ليس شودان وحده</h3>
+    <p>ويعمل بالطريقة نفسها محركات أخرى كثيرة، منها Censys الذي أسسه عام 2015 باحثو جامعة ميشيغان أنفسهم الذين صنعوا أداة ZMap، وBinaryEdge من أوروبا، وZoomEye وFOFA من الصين، إضافة إلى عشرات الجهات التي تمسح الإنترنت يوميًا لأغراض البحث والأمن.</p>
+    <div class="engine-tags"><span>Shodan</span><span>Censys</span><span>ZoomEye</span><span>FOFA</span><span>BinaryEdge</span><span>ONYPHE</span><span>Netlas</span></div>
+
+    <div class="callout">
+      <p>هذه المحركات لا تخترق شيئًا، بل تُظهر ما هو مكشوف أصلًا، فإذا اجتمع في جهاز منفذ ممرَّر إلى الإنترنت وكلمة مرور مصنع صار في متناول كل من يبحث، وهذا ما يكشفه سُور من داخل بيتك قبل أن تجده هذه المحركات من خارجه.</p>
+    </div>
+
+    <h3 class="eng-h">ماذا تفعل</h3>
+    <ul class="todo">
+      <li>لا تمرّر منافذ أجهزتك إلى الإنترنت، وعطّل UPnP في الراوتر إن لم تحتجه</li>
+      <li>غيّر كلمة مرور المصنع في كل جهاز فور تركيبه</li>
+      <li>حدّث برامج الراوتر والكاميرات وأجهزة البث باستمرار</li>
+      <li>افحص شبكتك من الداخل بسُور، وابحث في شودان عن عنوان بيتك أنت فقط لترى ما سجّله عنه</li>
+    </ul>
+    <p class="muted small">لا يتصل سُور بهذه المحركات ولا يرسل إليها شيئًا، بل يرى من داخل شبكتك ما قد تراه هي من خارجها.</p>
+
+    <details class="sources">
+      <summary>مصادر هذا القسم</summary>
+      <ul>
+        <li><a href="https://en.wikipedia.org/wiki/Shodan_(website)" rel="noopener">شودان ومؤسسه وسنة إطلاقه، ويكيبيديا</a></li>
+        <li><a href="https://book.shodan.io/behind-the-scenes/crawler-algorithm/" rel="noopener">طريقة عمل ماسحات شودان، الدليل الرسمي</a></li>
+        <li><a href="https://zmap.io/about" rel="noopener">مشروع ZMap، جامعة ميشيغان</a></li>
+        <li><a href="https://hackertarget.com/remote-access-granted/" rel="noopener">نشأة Censys عام 2015، HackerTarget</a></li>
+        <li><a href="https://link.springer.com/chapter/10.1007/978-981-33-4922-3_15" rel="noopener">دراسة مقارنة لمحركات البحث في الأجهزة وبلدانها، Springer</a></li>
+      </ul>
+    </details>
+  </div>
+
+  <div class="en">
+    <h2>Shodan and the others</h2>
+    <p class="lede">Shodan is a search engine John Matherly launched in 2009, but it does not index web pages the way Google does. It indexes the devices connected to the internet themselves, such as routers, cameras, servers, storage and industrial control systems, and records what each one announces about itself so anyone can search it.</p>
+
+    <h3 class="eng-h">How it works</h3>
+    <ol class="pipeline">
+      <li><b>Picks an address and a port</b><span>Its scanners run around the clock from many places in the world, each picking a random internet address and a random port.</span></li>
+      <li><b>Connects to the device</b><span>It tries that port, and if a device answers, it knows there is a service open to the internet.</span></li>
+      <li><b>Records what it announces</b><span>It keeps the message the service introduces itself with, which usually names the device, its model and its software version.</span></li>
+      <li><b>Makes it searchable</b><span>It adds the record to an index anyone can search by country, device type or port, then starts again, covering the whole internet at least once a week.</span></li>
+    </ol>
+
+    <h3 class="eng-h">The facts in numbers</h3>
+    <div class="facts">
+      <div class="fact"><b>5 minutes</b><p>is enough for most known scanners to reach a new device that comes online, according to a 2024 measurement by GreyNoise.</p><a href="https://www.greynoise.io/blog/checking-it-twice-profiling-benign-internet-scanners----2024-edition" rel="noopener">Source</a></div>
+      <div class="fact"><b>45 minutes</b><p>is all one computer needs to scan every internet address on one port, and a faster link brings it to about five, as University of Michigan researchers showed in 2013.</p><a href="https://zmap.io/paper.pdf" rel="noopener">Source</a></div>
+      <div class="fact"><b>Every week</b><p>Shodan covers the whole internet at least once, while its scanners never stop.</p><a href="https://help.shodan.io/mastery/data_timeline" rel="noopener">Source</a></div>
+      <div class="fact"><b>24 hours</b><p>is enough for changes to show up in Shodan and Censys results once seen, according to a 2021 academic study.</p><a href="https://www.ndss-symposium.org/wp-content/uploads/madweb2021_23009_paper.pdf" rel="noopener">Source</a></div>
+      <div class="fact"><b>62</b><p>default username and password pairs were all Mirai needed in 2016 to take over hundreds of thousands of cameras and routers.</p><a href="https://www.cisa.gov/news-events/alerts/2016/10/14/heightened-ddos-threat-posed-mirai-and-other-botnets" rel="noopener">Source</a></div>
+      <div class="fact"><b>73,000</b><p>cameras in 152 countries were streamed by a single website in 2014 because their owners never changed the factory password, and over two thousand were still accessible in 2025.</p><a href="https://en.wikipedia.org/wiki/Insecam" rel="noopener">Source</a></div>
+    </div>
+
+    <h3 class="eng-h">Not only Shodan</h3>
+    <p>Many other engines work the same way, among them Censys, founded in 2015 by the same University of Michigan researchers who built ZMap, BinaryEdge from Europe, and ZoomEye and FOFA from China, alongside dozens of organisations that scan the internet every day for research and security.</p>
+    <div class="engine-tags"><span>Shodan</span><span>Censys</span><span>ZoomEye</span><span>FOFA</span><span>BinaryEdge</span><span>ONYPHE</span><span>Netlas</span></div>
+
+    <div class="callout">
+      <p>These engines break into nothing. They show what is already exposed. When a device has a port forwarded to the internet and a factory password, it is within reach of anyone who searches, and that is what Soor finds from inside your home before these engines find it from outside.</p>
+    </div>
+
+    <h3 class="eng-h">What to do</h3>
+    <ul class="todo">
+      <li>Do not forward your devices' ports to the internet, and turn off UPnP on the router if you do not need it</li>
+      <li>Change the factory password on every device as soon as you set it up</li>
+      <li>Keep the router, cameras and streaming boxes updated</li>
+      <li>Check your network from inside with Soor, and look up your own home address on Shodan, only yours, to see what it has recorded</li>
+    </ul>
+    <p class="muted small">Soor never contacts these engines or sends them anything. It sees from inside your network what they might see from outside.</p>
+
+    <details class="sources">
+      <summary>Sources for this section</summary>
+      <ul>
+        <li><a href="https://en.wikipedia.org/wiki/Shodan_(website)" rel="noopener">Shodan, its founder and launch year, Wikipedia</a></li>
+        <li><a href="https://book.shodan.io/behind-the-scenes/crawler-algorithm/" rel="noopener">How Shodan's crawlers work, official guide</a></li>
+        <li><a href="https://zmap.io/about" rel="noopener">The ZMap project, University of Michigan</a></li>
+        <li><a href="https://hackertarget.com/remote-access-granted/" rel="noopener">The origins of Censys in 2015, HackerTarget</a></li>
+        <li><a href="https://link.springer.com/chapter/10.1007/978-981-33-4922-3_15" rel="noopener">A survey of cyberspace search engines and where they come from, Springer</a></li>
+      </ul>
+    </details>
+  </div>
+</section>
+
 <section id="how">
   <div class="ar"><h2>كيف يعمل</h2></div>
   <div class="en"><h2>How it works</h2></div>
@@ -147,15 +252,15 @@
 <section id="camera">
   <div class="ar">
     <h2>الكاميرات وكلمة مرور المصنع</h2>
-    <p>الكاميرا تظهر في محركات الفحص العامة لسببين مترابطين: أن الراوتر مرّر منفذها إلى الإنترنت، وأنها ما زالت على كلمة مرور المصنع، وسُور يعالج السببين معًا من داخل الشبكة قبل أن يجدها الماسح الخارجي.</p>
+    <p>الكاميرا تظهر في <a href="#engines">محركات الفحص العامة</a> لسببين مترابطين: أن الراوتر مرّر منفذها إلى الإنترنت، وأنها ما زالت على كلمة مرور المصنع، وسُور يعالج السببين معًا من داخل الشبكة قبل أن يجدها الماسح الخارجي.</p>
     <p>سُور لا يجرّب كلمة مرور على أي كاميرا، لأن هذا يجعله أداة هجوم، بل يكشف الضعف بثلاث طرق دفاعية: يقرأ جدول UPnP في الراوتر ليعرف إن كان منفذ الكاميرا مفتوحًا إلى الإنترنت، ويتعرّف على طراز الكاميرا فيقول لك إن هذا الطراز يُشحن ببيانات دخول معروفة للعامة، ويقرأ صفحة دخولها إن أعلنت أنها بلا كلمة مرور أو قبلت البث دون مصادقة.</p>
-    <p class="muted">القائمة نفسها من بيانات المصنع هي ما تستعمله محركات الفحص، ووجودها في المشروع للتوعية بضرورة تغييرها لا لاستعمالها.</p>
+    <p class="muted">ومثل هذه القوائم من بيانات المصنع هو ما تستعمله برمجيات خبيثة كميراي لاقتحام الأجهزة، أما محركات الفحص فلا تجرّب كلمات المرور بل تسجّل ما تعلنه الأجهزة فقط، ووجود القائمة في المشروع للتوعية بضرورة تغييرها لا لاستعمالها.</p>
   </div>
   <div class="en">
     <h2>Cameras and the factory password</h2>
-    <p>A camera appears on public scanning engines for two linked reasons: the router forwarded its port to the internet, and it is still on its factory password. Soor addresses both from inside the network before an outside scanner finds it.</p>
+    <p>A camera appears on <a href="#engines">public scanning engines</a> for two linked reasons: the router forwarded its port to the internet, and it is still on its factory password. Soor addresses both from inside the network before an outside scanner finds it.</p>
     <p>Soor never tries a password on any camera, because that would make it an attack tool. Instead it detects the weakness three defensive ways: it reads the router's UPnP table to see whether the camera's port is open to the internet, it identifies the camera model and tells you that model ships with publicly known login details, and it reads the login page when it announces it has no password set or serves the stream without authentication.</p>
-    <p class="muted">The same factory-credential list is what scanning engines use; it is in the project to raise awareness that they must be changed, not to be used.</p>
+    <p class="muted">Lists of factory credentials like this one are what malware such as Mirai uses to break into devices. Scanning engines do not try passwords; they only record what devices announce. The list is in the project to raise awareness that these passwords must be changed, not to be used.</p>
   </div>
 </section>
 

@@ -444,3 +444,108 @@ h1, h2, h3, p, li { overflow-wrap: anywhere; }
   .insp-change, .fixbtn { animation: none; transition: none; }
   .lab .st-dot { animation: none !important; }
 }
+
+/* ---- Shodan and the others ----
+   Awareness, with every number carrying its source. */
+.engines .lede { max-inline-size: 62ch; }
+.eng-h { margin-block: 34px 14px; font-size: 1.15rem; color: var(--ink); }
+
+.pipeline {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;
+  position: relative; counter-reset: step;
+}
+.pipeline::before {
+  /* the line the scanner travels along */
+  content: ""; position: absolute; inset-inline: 6%; inset-block-start: 22px;
+  block-size: 2px; background: linear-gradient(90deg, transparent, var(--rule) 12%, var(--rule) 88%, transparent);
+}
+.pipeline::after {
+  content: ""; position: absolute; inset-block-start: 17px; inset-inline-start: 6%;
+  inline-size: 12px; block-size: 12px; border-radius: 50%;
+  background: var(--signal); box-shadow: 0 0 14px var(--signal);
+  animation: scanpass 5s ease-in-out infinite;
+}
+@keyframes scanpass {
+  0% { inset-inline-start: 6%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { inset-inline-start: calc(94% - 12px); opacity: 0; }
+}
+.pipeline li {
+  position: relative; counter-increment: step;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 44px 14px 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.pipeline li::before {
+  content: counter(step); position: absolute; inset-block-start: 9px; inset-inline-start: 14px;
+  inline-size: 28px; block-size: 28px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 0.8rem; font-weight: 700;
+  background: var(--navy); color: #fff; box-shadow: 0 0 0 4px var(--bg);
+}
+.pipeline b { color: var(--ink); font-size: 0.98rem; }
+.pipeline span { color: var(--ink-2); font-size: 0.88rem; line-height: 1.7; }
+
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.fact {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 18px 16px 14px; display: flex; flex-direction: column; gap: 8px;
+}
+.fact b {
+  font-size: clamp(1.7rem, 3.4vw, 2.3rem); line-height: 1.1; color: var(--signal);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+.fact p { margin: 0; color: var(--ink-2); font-size: 0.9rem; line-height: 1.7; flex: 1; }
+.fact a { font-size: 0.76rem; color: var(--line); text-decoration: none; align-self: flex-start; }
+.fact a:hover { text-decoration: underline; }
+
+.engine-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 12px; }
+.engine-tags span {
+  font-family: var(--mono); font-size: 0.78rem; color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; direction: ltr;
+}
+
+.callout {
+  margin-block: 28px 4px; padding: 18px 20px; border-radius: 16px;
+  background: color-mix(in oklab, var(--navy) 16%, transparent);
+  border: 1px solid color-mix(in oklab, var(--navy) 45%, var(--rule));
+  border-inline-start: 4px solid var(--signal);
+}
+.callout p { margin: 0; color: var(--ink); font-size: 1.02rem; line-height: 1.85; font-weight: 500; }
+
+.todo { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.todo li {
+  position: relative; padding-inline-start: 30px; color: var(--ink); line-height: 1.7;
+}
+.todo li::before {
+  content: ""; position: absolute; inset-inline-start: 0; inset-block-start: 0.45em;
+  inline-size: 18px; block-size: 18px; border-radius: 6px;
+  background: color-mix(in oklab, var(--ok) 20%, transparent); border: 1px solid var(--ok);
+}
+.todo li::after {
+  content: ""; position: absolute; inset-inline-start: 6px; inset-block-start: calc(0.45em + 3px);
+  inline-size: 5px; block-size: 9px; border: solid var(--ok); border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+.engines .small { font-size: 0.84rem; margin-block-start: 14px; }
+
+.sources { margin-block-start: 18px; }
+.sources summary { cursor: pointer; color: var(--line); font-size: 0.86rem; min-block-size: 32px; }
+.sources ul { margin: 8px 0 0; padding-inline-start: 18px; display: grid; gap: 6px; }
+.sources a { color: var(--ink-2); font-size: 0.84rem; }
+
+@media (max-width: 900px) {
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .pipeline { grid-template-columns: 1fr; }
+  .pipeline::before { inset-inline: auto; inset-inline-start: 27px; inset-block: 20px; inline-size: 2px; block-size: auto;
+    background: linear-gradient(180deg, transparent, var(--rule) 8%, var(--rule) 92%, transparent); }
+  .pipeline::after { display: none; }
+  .pipeline li { padding: 14px 14px 14px 56px; }
+  [dir="rtl"] .pipeline li { padding: 14px 56px 14px 14px; }
+  .pipeline li::before { inset-block-start: 14px; }
+  .facts { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pipeline::after { animation: none; display: none; }
+}
