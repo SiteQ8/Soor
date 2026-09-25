@@ -105,10 +105,21 @@ def main():
         print('رُفعت الحزمة، رمزها', code, '|', round(aab.stat().st_size / 1048576, 1), 'ميغابايت')
 
         notes = release_notes(a.notes)
-        call('PATCH', f'{API}/{a.package}/edits/{edit}/tracks/{a.track}', tok,
-             {'track': a.track, 'releases': [{'versionCodes': [str(code)], 'status': 'completed',
-                                              'releaseNotes': notes}]})
-        print('وُضعت في مسار', a.track, '|', len(notes), 'لغة من ملاحظات الإصدار')
+        release = {'versionCodes': [str(code)], 'status': 'completed', 'releaseNotes': notes}
+        try:
+            call('PATCH', f'{API}/{a.package}/edits/{edit}/tracks/{a.track}', tok,
+                 {'track': a.track, 'releases': [release]})
+        except RuntimeError as e:
+            # Play lets an app that was never published hold draft releases only,
+            # so until its first release is sent for review in the Play Console
+            # the bundle waits there as a draft instead of failing the build
+            if 'draft app' not in str(e):
+                raise
+            release['status'] = 'draft'
+            call('PATCH', f'{API}/{a.package}/edits/{edit}/tracks/{a.track}', tok,
+                 {'track': a.track, 'releases': [release]})
+            print('::notice::التطبيق لم يُنشر بعد، فوُضعت الحزمة مسودة في المسار حتى تُرسل للمراجعة من Play Console')
+        print('وُضعت في مسار', a.track, '|', release['status'], '|', len(notes), 'لغة من ملاحظات الإصدار')
 
         call('POST', f'{API}/{a.package}/edits/{edit}:commit', tok, {})
         print('اعتُمد التحرير، والحزمة عند المختبرين')

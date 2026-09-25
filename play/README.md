@@ -16,5 +16,10 @@ rendered at 1290 x 2293 and scaled to 1080 x 1920. Play rejects screenshots
 longer than twice their width, which is why these are 9:16 and not the taller
 iPhone shape.
 
+`tools/android/play-listing.py` puts all of this on the store page in every
+language (texts, icon, feature graphic, screenshots, and release notes on a
+track's current release); `tools/android/play-upload.py` sends a bundle to a
+track, which `.github/workflows/android.yml` does on every Android change.
+
 Privacy policy: https://soor.3li.info/privacy.html
 Package: `com.eworldq8.soor`, the same identifier as the iOS app.
