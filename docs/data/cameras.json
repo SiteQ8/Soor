@@ -62,7 +62,7 @@
       ],
       "first_boot_password": true,
       "notes": {
-        "ar": "تطلب ضبط كلمة مرور المستخدم root عند أول تشغيل. الخطر إن تُركت بلا ضبط.",
+        "ar": "تطلب ضبط كلمة مرور المستخدم root عند أول تشغيل، والخطر أن تُترك بلا ضبط.",
         "en": "Requires setting the root password on first boot. The risk is if it was left unset."
       }
     },
@@ -158,7 +158,7 @@
       ],
       "first_boot_password": false,
       "notes": {
-        "ar": "كاميرات عامة بخوادم ويب معروفة الضعف وبيانات مصنع شائعة. إن كانت مكشوفة للإنترنت فاعتبرها معرّضة حتى تغيّر كلمة مرورها.",
+        "ar": "كاميرات عامة بخوادم ويب معروفة الضعف وبيانات مصنع شائعة، فإن كانت مكشوفة للإنترنت فاعتبرها معرّضة حتى تغيّر كلمة مرورها.",
         "en": "Generic cameras with known weak web servers and common factory details. If exposed to the internet, treat them as at risk until you change their password."
       }
     }

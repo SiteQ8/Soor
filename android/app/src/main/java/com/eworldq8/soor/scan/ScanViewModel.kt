@@ -1,35 +1,50 @@
 package com.eworldq8.soor.scan
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.eworldq8.soor.engine.*
-import android.content.Context
 import com.eworldq8.soor.AppLanguage
+import com.eworldq8.soor.engine.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.max
 
-// Ties the scanner, the UPnP reader, and the engine together. Order: read the
-// router's forwarded ports first so exposure is known, then sweep the network,
-// then run the engine. Everything on the device.
+// Ties discovery, the router's table, the sweep and the engine together, all on
+// the device. The engine judges every observation; this only gathers them and
+// keeps the screen informed while it does.
 
 enum class ScanState { IDLE, SCANNING, DONE, NO_NETWORK }
+enum class Phase { DISCOVER, PROBE, JUDGE }
+
+data class DeviceInfo(
+    val ip: String,
+    val name: String?,
+    val kind: DeviceKind,
+    val ports: List<Int>,
+    val isGateway: Boolean,
+    val isNew: Boolean,
+    val worst: Severity?,
+)
 
 data class ScanUiState(
     val state: ScanState = ScanState.IDLE,
-    val progressText: String = "",
+    val phase: Phase = Phase.DISCOVER,
     val progress: Float = 0f,
+    val liveHosts: List<String> = emptyList(),
+    val portsChecked: Int = 0,
     val findings: List<Finding> = emptyList(),
-    val deviceCount: Int = 0,
-    val upnpEnabled: Boolean = false,
-    val lastScan: Date? = null
+    val devices: List<DeviceInfo> = emptyList(),
+    val firstScan: Boolean = false,
+    val lastScan: Long? = null,
 )
 
 class ScanViewModel(app: Application) : AndroidViewModel(app) {
@@ -39,6 +54,8 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _lang = MutableStateFlow(AppLanguage.current(app))
     val lang: StateFlow<Lang> = _lang.asStateFlow()
+
+    private val known = KnownDevices(app)
 
     val knowledge: Knowledge by lazy {
         val ctx = getApplication<Application>()
@@ -60,88 +77,121 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
         _lang.value = next
     }
 
+    fun forgetDevices() = known.forget()
+
     fun start() {
         if (_ui.value.state == ScanState.SCANNING) return
         val ctx = getApplication<Application>()
-        if (NetworkScanner.localIPv4(ctx) == null) {
+        val net = NetworkScanner.localNet(ctx)
+        if (net == null) {
             _ui.value = _ui.value.copy(state = ScanState.NO_NETWORK)
             return
         }
-        val ar = _lang.value == Lang.AR
-        _ui.value = ScanUiState(
-            state = ScanState.SCANNING,
-            progressText = if (ar) "قراءة إعدادات الراوتر…" else "Reading router settings…"
-        )
-
+        _ui.value = ScanUiState(state = ScanState.SCANNING, progress = 0.02f)
         viewModelScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                val upnp = UPnPClient().exposedPorts()
-                val scanner = NetworkScanner(ctx)
-                scanner.onProgress = { p ->
-                    val text = when (p.phase) {
-                        "discovering" -> if (ar) "البحث عن الأجهزة… ${p.found} جهاز"
-                                         else "Finding devices… ${p.found} found"
-                        "probing" -> if (ar) "فحص المنافذ… ${p.scanned}/${p.total}"
-                                     else "Probing ports… ${p.scanned}/${p.total}"
-                        else -> ""
-                    }
-                    val frac = if (p.total > 0) p.scanned.toFloat() / p.total else 0f
-                    _ui.value = _ui.value.copy(progressText = text, progress = frac)
-                }
-                val observations = scanner.scan(upnp.exposedPorts).toMutableList()
-
-                // Represent an enabled UPnP as its own reviewable finding on the router.
-                if (upnp.upnpEnabled) {
-                    NetworkScanner.localIPv4(ctx)?.let { (_, prefix) ->
-                        val gateway = "$prefix.1"
-                        if (observations.none { it.host == gateway && it.port == 1900 }) {
-                            observations.add(
-                                Observation(host = gateway, port = 1900,
-                                    banner = "UPnP/1.1 IGD rootDevice")
-                            )
-                        }
-                    }
-                }
-                val findings = SoorEngine.analyse(observations, knowledge.services, knowledge.cameras)
-                Triple(findings, observations.map { it.host }.toSet().size, upnp.upnpEnabled)
-            }
-            _ui.value = ScanUiState(
-                state = ScanState.DONE,
-                findings = result.first,
-                deviceCount = result.second,
-                upnpEnabled = result.third,
-                lastScan = Date()
-            )
+            _ui.value = withContext(Dispatchers.IO) { runScan(ctx, net) }
         }
     }
 
-    fun summary(): Map<Severity, Int> = SoorEngine.summarise(_ui.value.findings)
+    private fun addHost(ip: String) = _ui.update { if (ip in it.liveHosts) it else it.copy(liveHosts = it.liveHosts + ip) }
 
-    /** A plain-text report the person can share themselves. Nothing is sent by us. */
+    private fun runScan(ctx: Context, net: LocalNet): ScanUiState {
+        val upnp = UPnPClient()
+        val ssdp = upnp.discoverAll()
+        ssdp.keys.forEach(::addHost)
+        net.gateway?.let(::addHost)
+        _ui.update { it.copy(progress = 0.08f) }
+
+        val router = upnp.routerTable()
+        _ui.update { it.copy(progress = 0.12f) }
+
+        val scanner = NetworkScanner(ctx)
+        scanner.onHostFound = ::addHost
+        scanner.onProgress = { p ->
+            val discovering = p.phase == "discovering"
+            val frac = p.done.toFloat() / max(1, p.total)
+            _ui.update {
+                it.copy(
+                    phase = if (discovering) Phase.DISCOVER else Phase.PROBE,
+                    progress = if (discovering) 0.12f + 0.43f * frac else 0.55f + 0.37f * frac,
+                    portsChecked = p.portsChecked,
+                )
+            }
+        }
+        val hosts = scanner.scan(net, ssdp.keys + listOfNotNull(net.gateway), router.exposed)
+        _ui.update { it.copy(phase = Phase.JUDGE, progress = 0.95f) }
+
+        // a device is new when this network has been scanned before and it was not on it
+        val key = KnownDevices.networkKey(net)
+        val seen = known.seen(key)
+        val ids = mutableSetOf<String>()
+        val newHosts = mutableSetOf<String>()
+        val observations = mutableListOf<Observation>()
+        for (h in hosts) {
+            val id = KnownDevices.id(h.ip, ssdp[h.ip])
+            ids += id
+            val isNew = seen != null && id !in seen
+            if (isNew) newHosts += h.ip
+            if (h.observations.isEmpty()) {
+                if (isNew) observations += Observation(host = h.ip, port = 0, isNew = true)
+            } else {
+                observations += h.observations.map { it.copy(isNew = isNew) }
+            }
+        }
+        val gw = net.gateway
+        if (router.upnpEnabled && gw != null && observations.none { it.host == gw && it.port == 1900 }) {
+            observations += Observation(host = gw, port = 1900, banner = "UPnP/1.1 IGD rootDevice")
+        }
+        val findings = SoorEngine.analyse(observations, knowledge.services, knowledge.cameras)
+        known.remember(key, ids)
+
+        val devices = hosts.map { h ->
+            val cameraVendor = h.observations.any { SoorEngine.matchCamera(it, knowledge.cameras) != null }
+            val ports = h.openPorts + if (h.ip == gw && router.upnpEnabled && 1900 !in h.openPorts) listOf(1900) else emptyList()
+            DeviceInfo(
+                ip = h.ip,
+                name = ssdp[h.ip]?.friendlyName,
+                kind = DeviceKinds.guess(ports.toSet(), ssdp[h.ip], h.ip == gw, cameraVendor),
+                ports = ports.sorted(),
+                isGateway = h.ip == gw,
+                isNew = h.ip in newHosts,
+                worst = findings.filter { it.host == h.ip }.minByOrNull { it.severity.order }?.severity,
+            )
+        }.sortedWith(compareBy({ !it.isGateway }, { it.worst?.order ?: 9 }, { it.ip.substringAfterLast('.').toIntOrNull() ?: 0 }))
+
+        return ScanUiState(
+            state = ScanState.DONE, phase = Phase.JUDGE, progress = 1f,
+            liveHosts = hosts.map { it.ip }, portsChecked = _ui.value.portsChecked,
+            findings = findings, devices = devices, firstScan = seen == null,
+            lastScan = System.currentTimeMillis(),
+        )
+    }
+
+    /** A plain-text report the person can share themselves. Nothing is sent by the app. */
     fun reportText(): String {
         val ar = _lang.value == Lang.AR
         val s = _ui.value
         val lines = mutableListOf<String>()
-        lines.add(if (ar) "تقرير فحص سُور" else "Soor scan report")
-        s.lastScan?.let {
-            lines.add(SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(it))
-        }
-        lines.add(if (ar) "عدد الأجهزة: ${s.deviceCount}" else "Devices: ${s.deviceCount}")
-        lines.add("")
-        if (s.findings.isEmpty()) {
-            lines.add(if (ar) "لا مخاطر ظاهرة." else "No visible risks.")
-        }
+        lines += if (ar) "تقرير فحص سُور" else "Soor scan report"
+        s.lastScan?.let { lines += SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ROOT).format(Date(it)) }
+        lines += Words.found(s.devices.size, ar)
+        lines += ""
+        if (s.findings.isEmpty()) lines += if (ar) "لا شيء يستحق القلق." else "Nothing to worry about."
         for (f in s.findings) {
             val r = SoorReport.render(f, knowledge, _lang.value)
-            lines.add("[${r.severityLabel}] ${r.title} | ${r.host}:${r.port}")
-            if (r.detail.isNotEmpty()) lines.add(r.detail)
-            if (r.fix.isNotEmpty()) lines.add((if (ar) "الحل: " else "Fix: ") + r.fix)
-            lines.add("")
+            lines += "[${r.severityLabel}] ${r.title} | ${f.host}" + (if (f.port > 0) ":${f.port}" else "")
+            if (r.detail.isNotEmpty()) lines += r.detail
+            if (r.fix.isNotEmpty()) lines += (if (ar) "الحل: " else "Fix: ") + r.fix
+            lines += ""
         }
-        lines.add(
-            if (ar) "فُحص محليًا على الجهاز بتطبيق سُور، ولم تُجمع أو تُرسل أي بيانات."
-            else "Scanned locally on the device by Soor. No data collected or sent."
-        )
+        lines += if (ar) "الأجهزة:" else "Devices:"
+        s.devices.forEach { d ->
+            lines += "• " + (d.name ?: DeviceKinds.label(d.kind, ar)) + " | ${d.ip}" +
+                (if (d.ports.isNotEmpty()) " | " + d.ports.joinToString(", ") else "")
+        }
+        lines += ""
+        lines += if (ar) "فُحص محليًا على الجهاز بتطبيق سُور، ولم يُرسل شيء إلى أي مكان."
+                 else "Scanned locally on the device by Soor. Nothing was sent anywhere."
         return lines.joinToString("\n")
     }
 }

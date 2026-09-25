@@ -39,7 +39,11 @@ services.forEach(function (s) {
   ["name", "what", "fix"].forEach(function (k) {
     ok(s[k] && s[k].ar && s[k].en, "service " + s.id + " missing " + k + " ar/en");
   });
-  ok(Array.isArray(s.ports) && s.ports.length > 0, "service " + s.id + " has no ports");
+  // A service is recognised by the ports it listens on, or by what it announces.
+  // A self-signed certificate is recognised only by what the certificate shows,
+  // never from the port number alone, so it may list no ports.
+  ok(Array.isArray(s.ports) && (s.ports.length > 0 || (Array.isArray(s.match) && s.match.length > 0)),
+     "service " + s.id + " can be recognised neither by port nor by banner");
   ok(SEVERITY_OK(s.severity), "service " + s.id + " bad severity " + s.severity);
 });
 cameras.forEach(function (v) {

@@ -14,7 +14,7 @@
       "severity": "high",
       "name": { "ar": "بث كاميرا RTSP", "en": "RTSP camera stream" },
       "what": {
-        "ar": "منفذ بث فيديو تستعمله كاميرات المراقبة. إن قبل البث دون كلمة مرور، شاهد أي أحد الكاميرا مباشرة.",
+        "ar": "منفذ بث فيديو تستعمله كاميرات المراقبة، فإن قبل البث دون كلمة مرور شاهد أي أحد الكاميرا مباشرة.",
         "en": "A video streaming port used by surveillance cameras. If it serves without a password, anyone can watch the camera live."
       },
       "fix": {
@@ -31,7 +31,7 @@
       "severity": "high",
       "name": { "ar": "خدمة كاميرا ONVIF", "en": "ONVIF camera service" },
       "what": {
-        "ar": "بروتوكول تحكم في الكاميرات. يكشف طراز الكاميرا وإعداداتها، وكثيرًا ما يقبل بيانات دخول المصنع.",
+        "ar": "بروتوكول تحكم في الكاميرات يكشف طرازها وإعداداتها، وكثيرًا ما يقبل بيانات دخول المصنع.",
         "en": "A camera control protocol. It reveals the camera model and settings, and often accepts factory login details."
       },
       "fix": {
@@ -48,7 +48,7 @@
       "severity": "critical",
       "name": { "ar": "منفذ تصحيح أخطاء أندرويد", "en": "Android debug bridge" },
       "what": {
-        "ar": "منفذ تصحيح أخطاء مفتوح في جهاز أندرويد، مثل صناديق البث. من يصل إليه يثبّت تطبيقات ويتحكم بالجهاز بالكامل دون كلمة مرور.",
+        "ar": "منفذ تصحيح أخطاء مفتوح في جهاز أندرويد مثل أجهزة البث، ومن يصل إليه يثبّت تطبيقات ويتحكم بالجهاز كله دون كلمة مرور.",
         "en": "An open debug port on an Android device such as a streaming box. Whoever reaches it can install apps and fully control the device with no password."
       },
       "fix": {
@@ -65,7 +65,7 @@
       "severity": "critical",
       "name": { "ar": "طرفية Telnet مكشوفة", "en": "Exposed Telnet console" },
       "what": {
-        "ar": "طرفية تحكم قديمة تنقل كل شيء دون تشفير، بما فيه كلمة المرور. كثير من أجهزة إنترنت الأشياء تتركها مفتوحة بكلمة مرور مصنع.",
+        "ar": "طرفية تحكم قديمة تنقل كل شيء دون تشفير بما فيه كلمة المرور، وكثير من أجهزة المنزل الذكية تتركها مفتوحة بكلمة مرور المصنع.",
         "en": "An old control console that sends everything unencrypted, including the password. Many IoT devices leave it open with a factory password."
       },
       "fix": {
@@ -82,7 +82,7 @@
       "severity": "medium",
       "name": { "ar": "لوحة إدارة عبر HTTP", "en": "Admin panel over HTTP" },
       "what": {
-        "ar": "لوحة إدارة تُفتح دون تشفير، فتُقرأ كلمة المرور في الطريق. تظهر في الراوترات وأجهزة التخزين والكاميرات.",
+        "ar": "لوحة إدارة تُفتح دون تشفير فتُقرأ كلمة المرور في طريقها إليها، وتظهر عادة في الراوترات وأجهزة التخزين والكاميرات.",
         "en": "An admin panel served without encryption, so the password can be read in transit. Seen on routers, storage devices, and cameras."
       },
       "fix": {
@@ -92,14 +92,14 @@
     },
     {
       "id": "https-selfsigned",
-      "ports": [443, 8443],
+      "ports": [],
       "proto": "tcp",
       "match": ["self-signed", "self signed"],
       "category": "router",
       "severity": "low",
       "name": { "ar": "شهادة ذاتية التوقيع", "en": "Self-signed certificate" },
       "what": {
-        "ar": "الخدمة مشفّرة لكن بشهادة تصدرها هي لنفسها، فلا جهة تضمن هويتها. مقبولة داخل الشبكة، وعلامة تنبيه إن كانت مكشوفة للإنترنت.",
+        "ar": "الخدمة مشفّرة لكن بشهادة لا تضمنها جهة موثوقة، وغالبًا تصدرها هي لنفسها، وهذا مقبول داخل الشبكة لكنه علامة تنبيه إن كانت مكشوفة للإنترنت.",
         "en": "The service is encrypted but with a certificate it issued to itself, so no authority vouches for its identity. Acceptable on the local network, a warning sign if it is exposed to the internet."
       },
       "fix": {
@@ -116,7 +116,7 @@
       "severity": "high",
       "name": { "ar": "مشاركة ملفات SMB", "en": "SMB file sharing" },
       "what": {
-        "ar": "خدمة مشاركة ملفات. إن سمحت بالوصول دون كلمة مرور، قرأ من على الشبكة ملفاتك أو كتب عليها، وقد استُغلّت في هجمات فدية معروفة.",
+        "ar": "خدمة مشاركة ملفات، فإن سمحت بالوصول دون كلمة مرور قرأ أي جهاز على الشبكة ملفاتك أو كتب عليها، وقد استُغلّت في هجمات فدية معروفة.",
         "en": "A file-sharing service. If it allows access without a password, anyone on the network can read or write your files, and it has been used in well-known ransomware attacks."
       },
       "fix": {
@@ -150,7 +150,7 @@
       "severity": "high",
       "name": { "ar": "سطح مكتب بعيد RDP", "en": "Remote desktop (RDP)" },
       "what": {
-        "ar": "خدمة تحكم كامل بجهاز ويندوز عن بُعد. إن كانت مكشوفة للإنترنت صارت هدفًا مباشرًا لهجمات تخمين كلمة المرور.",
+        "ar": "خدمة تحكم كامل بجهاز ويندوز عن بُعد، فإن كانت مكشوفة للإنترنت صارت هدفًا مباشرًا لهجمات تخمين كلمة المرور.",
         "en": "A service for full remote control of a Windows machine. If exposed to the internet, it becomes a direct target for password-guessing attacks."
       },
       "fix": {
@@ -167,7 +167,7 @@
       "severity": "low",
       "name": { "ar": "دخول آمن SSH", "en": "Secure shell (SSH)" },
       "what": {
-        "ar": "خدمة تحكم مشفّرة. آمنة بطبيعتها، لكنها هدف لتخمين كلمة المرور إن كانت مكشوفة للإنترنت بكلمة مرور ضعيفة.",
+        "ar": "خدمة تحكم مشفّرة وآمنة بطبيعتها، لكنها هدف لتخمين كلمة المرور إن كانت مكشوفة للإنترنت بكلمة مرور ضعيفة.",
         "en": "An encrypted control service. Safe by nature, but a target for password guessing if exposed to the internet with a weak password."
       },
       "fix": {
