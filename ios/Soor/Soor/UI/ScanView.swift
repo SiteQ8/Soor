@@ -26,8 +26,13 @@ struct ScanView: View {
             .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(app.lang == .ar ? "English" : "العربية") { app.toggle() }
-                        .font(.footnote.weight(.medium))
+                    // Apple lets the phone, not the app, change an app's language,
+                    // so this opens Soor's page in Settings where the choice lives
+                    Button { app.openLanguageSettings() } label: {
+                        Label(app.lang == .ar ? "اللغة" : "Language", systemImage: "globe")
+                            .labelStyle(.titleAndIcon)
+                    }
+                    .font(.footnote.weight(.medium))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showAbout = true } label: { Image(systemName: "info.circle") }

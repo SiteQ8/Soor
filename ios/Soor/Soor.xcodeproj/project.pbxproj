@@ -19,6 +19,7 @@
 		3CE686B3118C48448FC2F3D0 /* services.json in Resources */ = {isa = PBXBuildFile; fileRef = 8296F1BC0E88456D9E953430 /* services.json */; };
 		5CE66B71E4694AC2BFD4D310 /* cameras.json in Resources */ = {isa = PBXBuildFile; fileRef = B8060D89F71748188CB6B03D /* cameras.json */; };
 		F57E8ED3DB764F97ADF9E27A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8E2CED14791B44D785FDF78D /* Assets.xcassets */; };
+		928D14EC239EFE15B0A81098 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9A959084B41472FB9EC89EF6 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,8 @@
 		8E2CED14791B44D785FDF78D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets.xcassets"; sourceTree = "<group>"; };
 		B01716CFD14E4E808BC5576E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
 		7FD440F9590246C5B46FD280 /* Soor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Soor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		905D49C17F93535FBD1BBB27 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4F8F96689E87CBAC7E898F44 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +78,7 @@
 				C5574C8A37BB4F2F8FBFF08A /* SoorApp.swift */,
 				8E2CED14791B44D785FDF78D /* Assets.xcassets */,
 				B01716CFD14E4E808BC5576E /* Info.plist */,
+				9A959084B41472FB9EC89EF6 /* InfoPlist.strings */,
 			);
 			name = "Soor";
 			path = "Soor";
@@ -159,7 +163,7 @@
 			};
 			buildConfigurationList = 656BF19B96D44758A3E32C3E /* Build configuration list for PBXProject "Soor" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = ar;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				ar,
@@ -184,6 +188,7 @@
 				3CE686B3118C48448FC2F3D0 /* services.json in Resources */,
 				5CE66B71E4694AC2BFD4D310 /* cameras.json in Resources */,
 				F57E8ED3DB764F97ADF9E27A /* Assets.xcassets in Resources */,
+				928D14EC239EFE15B0A81098 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +212,18 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		9A959084B41472FB9EC89EF6 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				905D49C17F93535FBD1BBB27 /* ar */,
+				4F8F96689E87CBAC7E898F44 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		B2D1784A21134B7B99B1E12B /* Debug */ = {

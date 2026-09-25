@@ -1,0 +1,3 @@
+/* The name under the icon, and the local network permission prompt, in English */
+"CFBundleDisplayName" = "Soor";
+"NSLocalNetworkUsageDescription" = "Soor scans the Wi-Fi network your phone is on to find the devices on it and the ports they leave open. Nothing leaves your phone.";

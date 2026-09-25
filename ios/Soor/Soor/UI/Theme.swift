@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // The Soor look: Kuwait navy (#0033A0) with a warm gold signal, on a deep field.
 // Colours adapt to light and dark. Severity has its own scale.
@@ -48,16 +49,27 @@ extension Color {
     }
 }
 
-// The app's language, remembered between launches. Arabic is the default.
+// The app's language is the one iOS chose for Soor: the language set in
+// Settings > Soor > Language, else the first of the phone's own languages that
+// Soor speaks, else English. iOS shows that Language option because the app
+// carries an Arabic and an English localization. Soor keeps no language setting
+// of its own, so the phone's Settings is the one place to change it, and iOS
+// relaunches the app in the new language.
 final class AppState: ObservableObject {
-    @AppStorage("lang") private var stored: String = "ar"
-    @Published var lang: Lang = .ar
+    @Published var lang: Lang
 
-    init() { lang = Lang(rawValue: stored) ?? .ar }
+    init() { lang = AppState.systemLanguage() }
 
-    func toggle() {
-        lang = (lang == .ar) ? .en : .ar
-        stored = lang.rawValue
+    static func systemLanguage() -> Lang {
+        let code = Bundle.main.preferredLocalizations.first ?? "en"
+        return code.hasPrefix("ar") ? .ar : .en
     }
+
+    /// Opens Soor's page in Settings, where iOS shows the Language option.
+    func openLanguageSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
     var layout: LayoutDirection { lang == .ar ? .rightToLeft : .leftToRight }
 }
