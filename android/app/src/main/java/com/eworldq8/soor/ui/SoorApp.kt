@@ -69,7 +69,7 @@ fun SoorApp(vm: ScanViewModel) {
                     title = {},
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Theme.bg),
                     navigationIcon = {
-                        TextButton(onClick = { vm.toggleLang() }) {
+                        TextButton(onClick = { vm.switchLang(context) }) {
                             Text(if (ar) "English" else "العربية", color = Theme.ink2, fontSize = 14.sp)
                         }
                     },

@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eworldq8.soor.engine.*
+import android.content.Context
+import com.eworldq8.soor.AppLanguage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +37,7 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
     private val _ui = MutableStateFlow(ScanUiState())
     val ui: StateFlow<ScanUiState> = _ui.asStateFlow()
 
-    private val _lang = MutableStateFlow(Lang.AR)
+    private val _lang = MutableStateFlow(AppLanguage.current(app))
     val lang: StateFlow<Lang> = _lang.asStateFlow()
 
     val knowledge: Knowledge by lazy {
@@ -46,8 +48,16 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
-    fun toggleLang() {
-        _lang.value = if (_lang.value == Lang.AR) Lang.EN else Lang.AR
+    /** Reads the language again, after the phone's language or Soor's own changed. */
+    fun syncLang(context: Context) {
+        _lang.value = AppLanguage.current(context)
+    }
+
+    /** The language button: on Android 13 and later this changes Soor's language in the phone's settings. */
+    fun switchLang(context: Context) {
+        val next = if (_lang.value == Lang.AR) Lang.EN else Lang.AR
+        AppLanguage.set(context, next)
+        _lang.value = next
     }
 
     fun start() {

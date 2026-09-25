@@ -17,6 +17,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // the phone decides the language, and may have changed it while Soor was away
+        vm.syncLang(this)
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
