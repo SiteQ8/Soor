@@ -58,7 +58,7 @@
       }
     },
     "admin-https": {
-      label: { ar: "ادخل لوحة الإدارة عبر HTTPS", en: "Use HTTPS for the admin panel" },
+      label: { ar: "فعّل HTTPS في لوحة الإدارة", en: "Turn on HTTPS for the admin panel" },
       applies: function (d) { return has(d, function (o) { return o.port === 80; }); },
       apply: function (d) {
         d.obs = d.obs.filter(function (o) { return o.port !== 80; });
@@ -71,7 +71,7 @@
       apply: function (d) { d.obs.forEach(function (o) { o.internetExposed = false; }); }
     },
     "stream-auth": {
-      label: { ar: "فعّل كلمة المرور على البث", en: "Turn on a password for the stream" },
+      label: { ar: "اجعل البث يطلب كلمة مرور", en: "Make the stream require a password" },
       applies: function (d) { return has(d, function (o) { return o.noAuth; }); },
       apply: function (d) { d.obs.forEach(function (o) { o.noAuth = false; }); }
     },
@@ -81,12 +81,12 @@
       apply: function (d) { d.obs.forEach(function (o) { o.noAuth = false; }); }
     },
     "adb-off": {
-      label: { ar: "أطفئ تصحيح الأخطاء عبر الشبكة", en: "Turn off network debugging" },
+      label: { ar: "عطّل تصحيح الأخطاء عبر الشبكة", en: "Turn off network debugging" },
       applies: function (d) { return has(d, function (o) { return o.port === 5555; }); },
       apply: function (d) { d.obs = d.obs.filter(function (o) { return o.port !== 5555; }); }
     },
     "telnet-off": {
-      label: { ar: "أطفئ Telnet في الجهاز", en: "Turn off Telnet on the device" },
+      label: { ar: "عطّل Telnet في الجهاز", en: "Turn off Telnet on the device" },
       applies: function (d) { return has(d, function (o) { return o.port === 23 || o.port === 2323; }); },
       apply: function (d) { d.obs = d.obs.filter(function (o) { return o.port !== 23 && o.port !== 2323; }); }
     },
@@ -111,7 +111,7 @@
      Named by the state of the network, on one axis from worst to best, never by
      who lives there or what gadgets it has, since any home can be both. Each
      name matches the status the scan ends on: exposed to the internet (a breach
-     in the wall), open on the inside (the wall holds, a door inside does not),
+     in the wall), weak spots inside (the wall holds, some devices inside do not),
      and nearly fortified (only things worth reviewing). */
 
   var ROUTER_WEB = { port: 80, httpServer: "Router Webserver", banner: "WWW-Authenticate: Basic realm" };
@@ -133,7 +133,7 @@
           name: { ar: "جهاز التخزين", en: "Home storage" },
           obs: [{ port: 445, banner: "Samba 4.10", noAuth: true }], fixes: ["share-auth"] },
         { id: "box", kind: "tv", ip: "192.168.1.90",
-          name: { ar: "صندوق البث", en: "Streaming box" },
+          name: { ar: "جهاز البث", en: "Streaming box" },
           obs: [{ port: 5555, banner: "host::features", noAuth: true }], fixes: ["adb-off"] },
         { id: "laptop", kind: "laptop", ip: "192.168.1.10",
           name: { ar: "الحاسوب", en: "Laptop" },
@@ -146,7 +146,7 @@
     },
     {
       id: "inside",
-      name: { ar: "بيت مفتوح من الداخل", en: "Open on the inside" },
+      name: { ar: "بيت فيه ثغرات داخلية", en: "Weak spots inside" },
       devices: [
         { id: "router", kind: "router", hub: true, ip: "192.168.1.1",
           name: { ar: "الراوتر", en: "Router" },
@@ -156,10 +156,10 @@
           obs: [{ port: 34567, httpServer: "uc-httpd 1.0.0", httpTitle: "NETSurveillance WEB", noAuth: true }],
           fixes: ["replace-camera"] },
         { id: "hub", kind: "iot", ip: "192.168.1.30",
-          name: { ar: "وحدة التحكم", en: "Smart hub" },
+          name: { ar: "مركز التحكم المنزلي", en: "Smart hub" },
           obs: [{ port: 2323, banner: "BusyBox login:" }], fixes: ["telnet-off"] },
         { id: "box", kind: "tv", ip: "192.168.1.90",
-          name: { ar: "صندوق البث", en: "Streaming box" },
+          name: { ar: "جهاز البث", en: "Streaming box" },
           obs: [{ port: 5555, banner: "host::features", noAuth: true }], fixes: ["adb-off"] },
         { id: "mystery", kind: "unknown", ip: "192.168.1.150",
           name: { ar: "جهاز مجهول", en: "Unknown device" },
@@ -201,27 +201,23 @@
       en: "Nothing to worry about, what remains is for your information only."
     },
     clean: {
-      ar: "لم يفتح هذا الجهاز بابًا يستحق القلق.",
-      en: "This device opened no door worth worrying about."
+      ar: "لا شيء في هذا الجهاز يستحق القلق.",
+      en: "Nothing on this device needs worrying about."
     }
   };
 
   var STATUS = {
     scanning: { ar: "جارٍ الفحص", en: "Scanning" },
     exposed: { ar: "في السور ثغرة، وبيتك مرئي من الإنترنت", en: "There is a breach in the wall, your home is visible from the internet" },
-    urgent: { ar: "السور سليم، لكنّ في الداخل ما يحتاج إغلاقًا الآن", en: "The wall holds, but something inside needs closing now" },
+    urgent: { ar: "السور سليم، لكنّ في الداخل ما يحتاج معالجة الآن", en: "The wall holds, but something inside needs attention now" },
     review: { ar: "السور سليم، وبقيت أمور تستحق المراجعة", en: "The wall holds, a few things are worth reviewing" },
     clean: { ar: "السور سليم ولا شيء يستحق القلق", en: "The wall holds and nothing needs worrying about" }
   };
 
   var LOG = {
-    start: { ar: "بدء الفحص على الشبكة المحلية", en: "Starting the scan on the local network" },
-    found: { ar: "عُثر على", en: "Found" },
-    probe: { ar: "طرق المنافذ الشائعة", en: "Knocking on common ports" },
-    answer: { ar: "أجاب", en: "answered" },
+    start: { ar: "بدأ الفحص في الشبكة المحلية", en: "Scan started on the local network" },
+    probe: { ar: "فحص المنافذ الشائعة في كل جهاز", en: "Checking common ports on each device" },
     router: { ar: "قراءة جدول المنافذ في الراوتر", en: "Reading the router's port table" },
-    breach: { ar: "منفذ ممرَّر إلى الإنترنت من", en: "Port forwarded to the internet from" },
-    spotted: { ar: "ماسح عام يرصد", en: "A public scanner spots" },
     judge: { ar: "المحرك يرتّب النتائج بحسب الخطورة", en: "The engine ranks the findings by severity" },
     done: { ar: "انتهى الفحص، فاضغط أي جهاز", en: "Scan complete, tap any device" },
     fixed: { ar: "طُبّق الحل وأعاد المحرك حكمه", en: "Fix applied, the engine judged again" },
@@ -436,9 +432,12 @@
       later(i * 300, function () {
         n.probe = 1;
         if (!n.hub) for (var k = 0; k < 3; k++) particles.push({ t: "packet", node: n, p: -k * 0.2 });
-        var ports = n.dev.obs.filter(function (o) { return o.port > 0; })
-          .map(function (o) { return ":" + o.port; });
-        if (ports.length) log([n.dev.name, " ", ports.join(" "), " ", LOG.answer]);
+        var ps = n.dev.obs.filter(function (o) { return o.port > 0; }).map(function (o) { return o.port; })
+          .sort(function (a, b) { return a - b; });
+        if (ps.length) log([{
+          ar: (ps.length > 1 ? "منافذ مفتوحة في " : "منفذ مفتوح في ") + n.dev.name.ar + ": " + ps.join(" و"),
+          en: "Open " + (ps.length > 1 ? "ports" : "port") + " on " + n.dev.name.en + ": " + ps.join(", ")
+        }]);
       });
     });
     later(list.length * 300 + 450, readRouter);
@@ -453,7 +452,7 @@
       ex.forEach(function (n, i) {
         later(i * 260, function () {
           breaches.push({ node: n, x: clampX(n.x), open: 0, seal: 0, state: "forming", spotted: false });
-          log([LOG.breach, " ", n.dev.name]);
+          log([{ ar: "منفذ ممرَّر يكشف " + n.dev.name.ar + " للإنترنت", en: n.dev.name.en + " exposed to the internet by a forwarded port" }]);
           syncBreachCount();
         });
       });
@@ -653,7 +652,7 @@
           '<div class="insp-name"><b>' + L(lastChange.name) + "</b></div></div>" + changeHtml(lastChange);
       }
       html += '<p class="insp-hint">' +
-        T("اضغط أي جهاز على الخريطة أو في القائمة لترى ما يفتحه", "Tap any device on the map or in the list to see what it opens") + "</p>";
+        T("اضغط أي جهاز على الخريطة أو في القائمة لترى منافذه وحكم سُور عليه", "Tap any device on the map or in the list to see its ports and Soor's verdict") + "</p>";
       ui.inspector.innerHTML = html;
       return;
     }
@@ -684,7 +683,7 @@
       html += '<div class="insp-f" style="--c:' + sevVar(f.severity) + '">' +
         '<div class="insp-ft"><span class="insp-sev">' + r.severity + "</span><span>" + r.title + "</span></div>" +
         (lead ? '<p class="insp-detail">' + lead + "</p>" : "") +
-        ((parts.length || r.fix) ? '<details class="insp-more"><summary>' + T("التفاصيل وما تفعله في بيتك", "Details and what to do at home") + "</summary>" +
+        ((parts.length || r.fix) ? '<details class="insp-more"><summary>' + T("التفاصيل وخطوات الحل", "Details and how to fix it") + "</summary>" +
           (parts.length ? '<p class="insp-detail">' + parts.join(" ") + "</p>" : "") +
           (r.fix ? '<div class="insp-fix"><b>' + T("الحل", "The fix") + "</b><span>" + r.fix + "</span></div>" : "") +
           "</details>" : "") +
@@ -730,7 +729,7 @@
         if (!n.found && !n.dev.removed && sweep >= n.ang) {
           n.found = true; n.appear = 0;
           particles.push({ t: "ping", x: n.x, y: n.y, life: 1 });
-          log([LOG.found, " ", n.dev.name]);
+          log([{ ar: "عُثر على " + n.dev.name.ar, en: "Found: " + n.dev.name.en }]);
           renderDevices();
         }
       });
@@ -771,7 +770,7 @@
         var dx = tgt.x - crawler.x, step = 150 * dt;
         if (Math.abs(dx) <= step) {
           crawler.x = tgt.x; crawler.pause = 1.9; crawler.spot = tgt; crawler.idx++;
-          if (!tgt.spotted) { tgt.spotted = true; log([LOG.spotted, " ", tgt.node.dev.name]); }
+          if (!tgt.spotted) { tgt.spotted = true; log([{ ar: "ماسح عام يرصد " + tgt.node.dev.name.ar, en: "Spotted by a public scanner: " + tgt.node.dev.name.en }]); }
         } else {
           crawler.dir = dx > 0 ? 1 : -1;
           crawler.x += crawler.dir * step;
@@ -1026,7 +1025,7 @@
       ctx.font = "600 10px 'Readex Pro', system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.fillStyle = C.crit;
-      var label = T("رصدٌ من الإنترنت", "Spotted from the internet");
+      var label = T("ماسح عام رصد الثغرة", "A public scanner found the gap");
       var half = ctx.measureText(label).width / 2 + 4;
       ctx.fillText(label, Math.max(half, Math.min(W - half, x)), y - 11);
     }
