@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Soor marketing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Renders one marketing image from real screenshots. Query: ?scene=hero|devices|exposed|fix|privacy|month|both
+     &lang=ar|en &size=square|story|wide. Rendered by tools/marketing/render.js at exact pixel sizes. */
+  :root {
+    --navy: #0033A0; --navy-bright: #1747B8; --navy-lite: #4C70BC; --signal: #E8A13A;
+    --bg: #05060E; --bg2: #0A1024; --panel: #0F1730; --ink: #EAF0FB; --ink2: #A7B4D4; --ink3: #7584AD; --rule: #23305A;
+    --crit: #FF6B5B; --ok: #52C48D;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: "Readex Pro", system-ui, sans-serif; }
+  body.square { width: 1080px; height: 1080px; }
+  body.story { width: 1080px; height: 1920px; }
+  body.wide { width: 1920px; height: 1080px; }
+  .canvas { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  .glow { position: absolute; inset: 0; background:
+      radial-gradient(1100px 700px at var(--gx, 80%) -10%, rgba(0,51,160,.55), transparent 60%),
+      radial-gradient(700px 500px at var(--px, 20%) 110%, rgba(232,161,58,.16), transparent 60%); }
+  .rings { position: absolute; inset-inline-end: -14%; inset-block-start: -18%; width: 70%; aspect-ratio: 1; opacity: .55; }
+  .rings circle { fill: none; stroke: var(--navy-lite); stroke-opacity: .28; stroke-width: 1.2; }
+  .rings line { stroke: var(--navy-lite); stroke-opacity: .16; stroke-width: 1; }
+  .wall { position: absolute; inset-inline: 0; inset-block-end: 0; height: 26px; opacity: .55; }
+  .wall rect { fill: var(--signal); }
+
+  .badge { position: absolute; inset-block-start: 44px; inset-inline-start: 56px; display: inline-flex; align-items: center; gap: 12px;
+    padding: 12px 20px; border-radius: 999px; border: 1px solid rgba(232,161,58,.55); background: rgba(232,161,58,.10);
+    color: var(--signal); font-weight: 600; font-size: 22px; letter-spacing: .1px; }
+  .badge svg { width: 24px; height: 24px; fill: none; stroke: var(--signal); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .brand { position: absolute; inset-block-end: 44px; inset-inline-start: 56px; display: flex; align-items: center; gap: 14px; color: var(--ink2); font-size: 22px; }
+  .brand img { width: 44px; height: 44px; border-radius: 12px; }
+  .brand b { color: var(--ink); font-size: 24px; }
+  .brand .url { font-family: "IBM Plex Mono", monospace; font-size: 20px; color: var(--ink3); direction: ltr; }
+  .brand .sep { color: var(--rule); }
+
+  .layout { position: absolute; inset: 0; display: grid; align-items: center; }
+  .square .layout { grid-template-columns: 1.05fr .95fr; padding: 130px 56px 120px; gap: 24px; }
+  .story .layout { grid-template-rows: auto 1fr; padding: 150px 64px 130px; gap: 30px; align-items: start; }
+  .wide .layout { grid-template-columns: 1.1fr .9fr; padding: 130px 90px 120px; gap: 40px; }
+
+  .copy h1 { font-size: 66px; line-height: 1.22; font-weight: 700; letter-spacing: -.2px; }
+  .copy h1 em { font-style: normal; color: var(--signal); }
+  .copy p { margin-block-start: 22px; font-size: 27px; line-height: 1.62; color: var(--ink2); font-weight: 300; max-inline-size: 30ch; }
+  .story .copy h1 { font-size: 78px; }
+  .story .copy p { font-size: 31px; max-inline-size: 26ch; }
+  .wide .copy h1 { font-size: 84px; }
+  .wide .copy p { font-size: 30px; max-inline-size: 32ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; margin-block-start: 30px; }
+  .chip { display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: rgba(15,23,48,.9); border: 1px solid var(--rule); font-size: 21px; color: var(--ink); }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+  .stat { display: inline-flex; align-items: baseline; gap: 16px; margin-block-start: 34px; padding: 22px 28px; border-radius: 22px; background: rgba(15,23,48,.85); border: 1px solid var(--rule); }
+  .stat b { font-family: "IBM Plex Mono", monospace; font-size: 74px; color: var(--signal); line-height: 1; direction: ltr; }
+  .stat b small { font-family: "Readex Pro", system-ui, sans-serif; font-size: 34px; font-weight: 600; margin-inline-start: 10px; }
+  .stat span { font-size: 24px; color: var(--ink2); max-inline-size: 22ch; line-height: 1.45; }
+
+  .stage { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .halo { position: absolute; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, rgba(0,51,160,.55), rgba(0,51,160,0) 70%); filter: blur(10px); }
+  .phone { position: relative; width: 430px; aspect-ratio: 880 / 1912; padding: 12px; border-radius: 66px; background: #05070f;
+    box-shadow: 0 50px 120px rgba(0,0,0,.65), 0 0 0 1.5px rgba(76,112,188,.45), inset 0 0 0 2px #0d1230; }
+  .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 54px; display: block; }
+  .phone.android { aspect-ratio: 720 / 1280; border-radius: 52px; }
+  .phone.android img { border-radius: 42px; }
+  .story .phone { width: 720px; }
+  .story .stage { align-items: flex-end; }
+  .story .phone { transform: translateY(160px); }
+  .wide .phone { width: 420px; }
+  .pair { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 0; height: 100%; }
+  .pair .phone { width: 360px; }
+  .pair .phone:first-child { transform: translate(42px, 40px) rotate(-3deg); z-index: 2; }
+  .pair .phone:last-child { transform: translate(-42px, 90px) rotate(4deg); }
+  .square .pair .phone { width: 330px; }
+  .wide .pair .phone { width: 360px; }
+  .story .pair .phone { width: 470px; transform: none; }
+  .story .pair .phone:first-child { transform: translate(60px, 60px) rotate(-3deg); }
+  .story .pair .phone:last-child { transform: translate(-60px, 120px) rotate(4deg); }
+  .tag { position: absolute; padding: 12px 18px; border-radius: 14px; background: rgba(5,6,14,.85); border: 1px solid var(--rule); color: var(--ink); font-size: 20px; backdrop-filter: blur(6px); }
+  .tag.a { inset-block-start: 6%; inset-inline-end: 0; }
+  .tag.b { inset-block-end: 12%; inset-inline-start: 0; }
+  .tag i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-end: 8px; }
+
+  /* in the tall format the phone reaches the bottom edge, so the brand line sits at the top */
+  .story .brand { inset-block-end: auto; inset-block-start: 48px; inset-inline-start: auto; inset-inline-end: 56px; }
+  .story .brand span:not(.url):not(.sep) { display: none; }
+  [lang="en"] .badge { font-size: 20px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="glow"></div>
+  <svg class="rings" viewBox="0 0 400 400"><circle cx="200" cy="200" r="70"/><circle cx="200" cy="200" r="130"/><circle cx="200" cy="200" r="190"/><line x1="10" y1="200" x2="390" y2="200"/><line x1="200" y1="10" x2="200" y2="390"/></svg>
+  <svg class="wall" preserveAspectRatio="none" viewBox="0 0 1200 26" id="wall"></svg>
+  <div class="badge" id="badge"></div>
+  <div class="layout" id="layout"></div>
+  <div class="brand" id="brand"></div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+const scene = q.get('scene') || 'hero';
+const lang = q.get('lang') === 'en' ? 'en' : 'ar';
+const size = ['story','wide'].includes(q.get('size')) ? q.get('size') : 'square';
+document.documentElement.lang = lang;
+document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+document.body.className = size;
+const ar = lang === 'ar';
+const t = (a, e) => ar ? a : e;
+
+const shield = '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+document.getElementById('badge').innerHTML = shield + '<span>' + t('أكتوبر، شهر التوعية بالأمن السيبراني', 'October, Cybersecurity Awareness Month') + '</span>';
+document.getElementById('brand').innerHTML =
+  '<img src="../../docs/assets/logo.svg" alt=""><b>' + t('سُور', 'Soor') + '</b><span class="sep">·</span><span class="url">soor.3li.info</span><span class="sep">·</span><span>' + t('مفتوح المصدر', 'Open source') + '</span>';
+
+// the rampart along the bottom edge
+let wall = '';
+for (let x = 0; x < 1200; x += 34) wall += '<rect x="' + x + '" y="0" width="20" height="12"/>';
+document.getElementById('wall').innerHTML = wall + '<rect x="0" y="12" width="1200" height="14"/>';
+
+const ios = (n) => '../../marketing/shots/ios/' + lang + '-' + n + '.png';
+const droid = (n) => '../../marketing/shots/android/' + lang + '-' + n + '.png';
+
+const scenes = {
+  hero: {
+    h: t('افحص شبكة بيتك كما يفحصها <em>مختبِر الاختراق</em>', 'Scan your home network the way a <em>penetration tester</em> would'),
+    p: t('يجد كل جهاز على شبكتك وما يفتحه من منافذ، ويكشف ما هو مرئي من الإنترنت، مع حل لكل اكتشاف',
+         'It finds every device on your network and the ports it leaves open, shows what is visible from the internet, and gives a fix for each finding'),
+    chips: [t('مفتوح المصدر', 'Open source'), t('لا يجمع بيانات', 'Collects nothing'), t('أندرويد وآيفون', 'Android and iPhone')],
+    shot: ios('home'), tags: [[t('كل جهاز باسمه', 'Every device by name'), 'var(--ok)', 'a'], [t('ما هو مكشوف للإنترنت', 'What is exposed'), 'var(--crit)', 'b']],
+  },
+  devices: {
+    h: t('كل جهاز على شبكتك، <em>باسمه</em>', 'Every device on your network, <em>by name</em>'),
+    p: t('هاتفك وتلفازك وطابعتك والكاميرا كما تعلن عن نفسها، وما يفتحه كل منها من منافذ، وتنبيه حين يظهر جهاز لأول مرة',
+         'Your phone, TV, printer and camera as they announce themselves, the ports each one opens, and an alert when a device appears for the first time'),
+    chips: [t('أسماء حقيقية عبر Bonjour وNetBIOS', 'Real names over Bonjour and NetBIOS'), t('تنبيه للجهاز الجديد', 'New device alert')],
+    shot: droid('devices'), android: true,
+  },
+  exposed: {
+    h: t('ما هو مكشوف من بيتك <em>للإنترنت</em>', 'What your home exposes <em>to the internet</em>'),
+    p: t('يقرأ جدول المنافذ في الراوتر فيعرف أي جهاز مرئي من الخارج، قبل أن تجده محركات الفحص العامة',
+         'It reads the router\'s forwarded ports to tell which device is visible from outside, before public scanning engines find it'),
+    chips: [t('جدول الراوتر عبر UPnP', 'The router\'s table over UPnP'), t('الكاميرات أولًا', 'Cameras first')],
+    shot: ios('results'),
+  },
+  fix: {
+    h: t('لكل اكتشاف <em>حلّه</em>', 'Every finding comes <em>with its fix</em>'),
+    p: t('خطوة واضحة تُغلق الثغرة، ثم افحص من جديد لترى ما تغيّر منذ آخر فحص',
+         'A clear step that closes the gap, then scan again and see what changed since last time'),
+    chips: [t('ما معنى هذا', 'What it means'), t('كيف تصلحه', 'How to fix it'), t('ما تغيّر', 'What changed')],
+    shot: ios('detail'),
+  },
+  privacy: {
+    h: t('يعمل في هاتفك <em>وحده</em>', 'Runs on your phone <em>only</em>'),
+    p: t('لا حساب ولا خادم ولا إعلانات، ولا يتصل إلا بعناوين داخل شبكة بيتك، والشيفرة مفتوحة لمن يريد التحقق',
+         'No account, no server, no ads. It connects only to addresses inside your home network, and the code is open for anyone to verify'),
+    chips: [t('لا خادم', 'No server'), t('لا تحليلات', 'No analytics'), t('شيفرة مفتوحة', 'Open code')],
+    shot: ios('about'),
+  },
+  month: {
+    h: t('أكتوبر شهر التوعية بالأمن السيبراني، <em>فابدأ من بيتك</em>', 'October is Cybersecurity Awareness Month. <em>Start at home</em>'),
+    p: t('افحص شبكتك وأغلق ما هو مكشوف قبل أن يجده غيرك', 'Scan your network and close what is exposed before someone else finds it'),
+    stat: ['5<small>' + t('دقائق', 'minutes') + '</small>', t('بعدها تظهر أي خدمة مكشوفة حديثًا في محركات الفحص العامة', 'is all it takes for public scanning engines to find a newly exposed service')],
+    shot: ios('scanning'),
+  },
+  network: {
+    h: t('يفحص <em>الشبكة نفسها</em> لا الأجهزة وحدها', 'It checks <em>the network itself</em>, not only the devices'),
+    p: t('تشفير الواي فاي، وخوادم الأسماء التي تمر بها مواقعك، والعنوان الذي يراك به العالم كما يعرفه راوترك',
+         'Your Wi-Fi encryption, the name servers your browsing passes through, and the address the world sees you by, as your router knows it'),
+    chips: [t('WPA2 أو WPA3', 'WPA2 or WPA3'), t('خوادم الأسماء', 'Name servers'), t('عنوانك العام', 'Your public address')],
+    shot: droid('network'), android: true,
+  },
+  both: {
+    h: t('على أندرويد <em>وآيفون</em>', 'On Android <em>and iPhone</em>'),
+    p: t('مجانًا ومفتوح المصدر، وفي مرحلة الاختبار الآن، والانضمام من soor.3li.info',
+         'Free and open source, now in testing. Join at soor.3li.info'),
+    chips: [t('Google Play', 'Google Play'), t('App Store', 'App Store'), t('GitHub', 'GitHub')],
+    pair: [droid('home'), ios('home')],
+  },
+};
+const s = scenes[scene] || scenes.hero;
+
+let copy = '<div class="copy"><h1>' + s.h + '</h1><p>' + s.p + '</p>';
+if (s.chips) copy += '<div class="chips">' + s.chips.map(c => '<span class="chip"><i></i>' + c + '</span>').join('') + '</div>';
+if (s.stat) copy += '<div class="stat"><b>' + s.stat[0] + '</b><span>' + s.stat[1] + '</span></div>';
+copy += '</div>';
+
+let stage = '<div class="stage"><div class="halo"></div>';
+if (s.pair) {
+  stage += '<div class="pair"><div class="phone android"><img src="' + s.pair[0] + '"></div><div class="phone"><img src="' + s.pair[1] + '"></div></div>';
+} else {
+  stage += '<div class="phone' + (s.android ? ' android' : '') + '"><img src="' + s.shot + '"></div>';
+  (s.tags || []).forEach(([label, color, pos]) => { stage += '<div class="tag ' + pos + '"><i style="background:' + color + '"></i>' + label + '</div>'; });
+}
+stage += '</div>';
+document.getElementById('layout').innerHTML = copy + stage;
+</script>
+</body>
+</html>
