@@ -77,7 +77,29 @@ class NetworkScanner(private val context: Context) {
 
     @Volatile var onProgress: ((ScanProgress) -> Unit)? = null
     @Volatile var onHostFound: ((String) -> Unit)? = null
+    @Volatile var onProbing: ((String) -> Unit)? = null
     private val portsChecked = AtomicInteger(0)
+
+    // Stopping is cooperative: the flag is checked before every knock, and the
+    // pools are shut down, so a stop lands within a second and keeps what was found.
+    @Volatile var cancelled = false
+        private set
+    private val pools = mutableListOf<java.util.concurrent.ExecutorService>()
+
+    fun cancel() {
+        cancelled = true
+        synchronized(pools) { pools.forEach { it.shutdownNow() } }
+    }
+
+    private fun pool(threads: Int) = Executors.newFixedThreadPool(threads).also { synchronized(pools) { pools += it } }
+
+    private fun waitFor(pool: java.util.concurrent.ExecutorService, minutes: Long) {
+        pool.shutdown()
+        val end = System.currentTimeMillis() + minutes * 60_000
+        while (!pool.awaitTermination(200, TimeUnit.MILLISECONDS)) {
+            if (cancelled || System.currentTimeMillis() > end) { pool.shutdownNow(); break }
+        }
+    }
 
     /**
      * Sweeps the /24, then probes every device found. [seeds] are devices already
@@ -86,17 +108,18 @@ class NetworkScanner(private val context: Context) {
      */
     fun scan(net: LocalNet, seeds: Collection<String>, exposed: Set<String>): List<HostScan> {
         val hosts = discoverHosts(net, seeds)
-        val pool = Executors.newFixedThreadPool(24)
+        val pool = pool(24)
         val results = Collections.synchronizedList(mutableListOf<HostScan>())
         val done = AtomicInteger(0)
         for (host in hosts) {
             pool.submit {
+                if (cancelled) return@submit
+                onProbing?.invoke(host)
                 results.add(probeHost(host, exposed))
                 onProgress?.invoke(ScanProgress("probing", done.incrementAndGet(), hosts.size, portsChecked.get()))
             }
         }
-        pool.shutdown()
-        pool.awaitTermination(4, TimeUnit.MINUTES)
+        waitFor(pool, 4)
         return results.sortedBy { it.ip.substringAfterLast('.').toIntOrNull() ?: 0 }
     }
 
@@ -105,17 +128,17 @@ class NetworkScanner(private val context: Context) {
         fun found(ip: String) { if (ip != net.ip && live.add(ip)) onHostFound?.invoke(ip) }
         seeds.filter { it.startsWith(net.prefix + ".") }.forEach(::found)
 
-        val pool = Executors.newFixedThreadPool(64)
+        val pool = pool(64)
         val checked = AtomicInteger(0)
         for (i in 1..254) {
             val ip = "${net.prefix}.$i"
             pool.submit {
+                if (cancelled) return@submit
                 if (ip != net.ip && !live.contains(ip) && isHostUp(ip)) found(ip)
                 onProgress?.invoke(ScanProgress("discovering", checked.incrementAndGet(), 254, portsChecked.get()))
             }
         }
-        pool.shutdown()
-        pool.awaitTermination(3, TimeUnit.MINUTES)
+        waitFor(pool, 3)
         return live.toList()
     }
 
@@ -140,6 +163,7 @@ class NetworkScanner(private val context: Context) {
         val open = mutableListOf<Int>()
         val obs = mutableListOf<Observation>()
         for (port in COMMON_PORTS) {
+            if (cancelled) break
             if (knock(ip, port, CONNECT_TIMEOUT_MS) != Knock.OPEN) continue
             open.add(port)
             val banner = if (port in TLS_PORTS) {

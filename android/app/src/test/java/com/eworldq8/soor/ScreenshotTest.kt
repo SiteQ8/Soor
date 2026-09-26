@@ -10,7 +10,9 @@ import com.eworldq8.soor.engine.Observation
 import com.eworldq8.soor.engine.SoorEngine
 import com.eworldq8.soor.scan.DeviceInfo
 import com.eworldq8.soor.scan.DeviceKind
+import com.eworldq8.soor.scan.LocalNet
 import com.eworldq8.soor.scan.Phase
+import com.eworldq8.soor.scan.ScanEvent
 import com.eworldq8.soor.scan.ScanState
 import com.eworldq8.soor.scan.ScanUiState
 import com.eworldq8.soor.ui.LocalStill
@@ -79,12 +81,18 @@ class ScreenshotTest {
             dev("192.168.1.150", null, DeviceKind.UNKNOWN, emptyList(), new = true),
         )
     }
+    private val net = LocalNet("192.168.1.42", "192.168.1", "192.168.1.1")
     private val results by lazy {
         ScanUiState(state = ScanState.DONE, phase = Phase.JUDGE, progress = 1f, liveHosts = devices.map { it.ip },
-            portsChecked = 1834, findings = findings, devices = devices, lastScan = 0L)
+            portsChecked = 1834, findings = findings, devices = devices, lastScan = 1758880800000L, network = net,
+            startedAt = 1758880752000L, durationMs = 48000L)
     }
     private val scanning = ScanUiState(state = ScanState.SCANNING, phase = Phase.PROBE, progress = 0.62f,
-        liveHosts = listOf("192.168.1.1", "192.168.1.64", "192.168.1.90", "192.168.1.30", "192.168.1.10"), portsChecked = 1287)
+        liveHosts = listOf("192.168.1.1", "192.168.1.64", "192.168.1.90", "192.168.1.30", "192.168.1.10"), portsChecked = 1287,
+        network = net, startedAt = System.currentTimeMillis() - 41000L,
+        events = listOf(ScanEvent("start"), ScanEvent("announced", "192.168.1.90"), ScanEvent("upnp-on"),
+            ScanEvent("found", "192.168.1.64"), ScanEvent("found", "192.168.1.30"), ScanEvent("found", "192.168.1.10"),
+            ScanEvent("probe", "192.168.1.1"), ScanEvent("probe", "192.168.1.64")))
 
     private fun shot(name: String, ui: ScanUiState, lang: Lang = Lang.AR, sheet: Sheet? = null, scrollTo: Int? = null) {
         compose.mainClock.autoAdvance = false
@@ -102,6 +110,7 @@ class ScreenshotTest {
     }
 
     @Test fun home_ar() = shot("ar-1-home", ScanUiState())
+    @Test fun home_last_ar() = shot("ar-8-home-last", results.copy(state = ScanState.IDLE))
     @Test fun scanning_ar() = shot("ar-2-scanning", scanning)
     @Test fun results_ar() = shot("ar-3-results", results)
     @Test fun devices_ar() = shot("ar-4-devices", results, scrollTo = 3 + findings.size)

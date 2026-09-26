@@ -32,6 +32,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
@@ -47,7 +49,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +78,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.eworldq8.soor.R
 import com.eworldq8.soor.engine.Finding
 import com.eworldq8.soor.engine.Knowledge
@@ -83,7 +91,9 @@ import com.eworldq8.soor.engine.SoorReport
 import com.eworldq8.soor.scan.DeviceInfo
 import com.eworldq8.soor.scan.DeviceKind
 import com.eworldq8.soor.scan.DeviceKinds
+import com.eworldq8.soor.scan.LocalNet
 import com.eworldq8.soor.scan.Phase
+import com.eworldq8.soor.scan.ScanEvent
 import com.eworldq8.soor.scan.ScanState
 import com.eworldq8.soor.scan.ScanUiState
 import com.eworldq8.soor.scan.ScanViewModel
@@ -109,6 +119,27 @@ private fun portName(p: Int, ar: Boolean): String = when (p) {
     631 -> t(ar, "طباعة IPP", "IPP printing")
     548 -> t(ar, "مشاركة ملفات Apple", "Apple file sharing")
     else -> t(ar, "خدمة", "Service")
+}
+private fun clock(ms: Long): String {
+    val s = (ms / 1000).coerceAtLeast(0)
+    return "%02d:%02d".format(Locale.ROOT, s / 60, s % 60)
+}
+private fun when_(ms: Long): String = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(ms))
+private fun eventText(e: ScanEvent, ar: Boolean): String {
+    val ip = e.ip?.let { ltr(it) } ?: ""
+    return when (e.kind) {
+        "start" -> t(ar, "بدأ الفحص", "Scan started")
+        "announce" -> t(ar, "يسأل الأجهزة أن تعلن عن نفسها", "Asking devices to announce themselves")
+        "announced" -> t(ar, "أعلن $ip عن نفسه", "$ip announced itself")
+        "router" -> t(ar, "يقرأ جدول المنافذ في الراوتر", "Reading the router's port table")
+        "upnp-on" -> t(ar, "UPnP مفعّل في الراوتر", "UPnP is on at the router")
+        "upnp-off" -> t(ar, "UPnP معطّل في الراوتر", "UPnP is off at the router")
+        "found" -> t(ar, "عُثر على $ip", "Found $ip")
+        "probe" -> t(ar, "يفحص منافذ $ip", "Checking the ports of $ip")
+        "judge" -> t(ar, "المحرك يرتّب ما وجده", "The engine ranks what it found")
+        "stop" -> t(ar, "أوقفتَ الفحص", "You stopped the scan")
+        else -> e.kind
+    }
 }
 private fun radarDot(ip: String): RadarDot {
     val o = ip.substringAfterLast('.').toIntOrNull() ?: 0
@@ -137,6 +168,9 @@ fun SoorApp(vm: ScanViewModel) {
         },
         onForget = { vm.forgetDevices() },
         onOpen = { url -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
+        onStop = { vm.stop() },
+        onHome = { vm.home() },
+        onResults = { vm.showResults() },
     )
 }
 
@@ -145,9 +179,14 @@ fun SoorScreen(
     ui: ScanUiState, lang: Lang, knowledge: Knowledge,
     onScan: () -> Unit, onToggleLang: () -> Unit, onShare: () -> Unit,
     onForget: () -> Unit, onOpen: (String) -> Unit, initialSheet: Sheet? = null,
+    onStop: () -> Unit = {}, onHome: () -> Unit = {}, onResults: () -> Unit = {},
 ) {
     val ar = lang == Lang.AR
     var sheet by remember { mutableStateOf(initialSheet) }
+    // the phone's back button stops a running scan, and leaves the results for the start screen
+    BackHandler(enabled = ui.state == ScanState.SCANNING || ui.state == ScanState.DONE) {
+        if (ui.state == ScanState.SCANNING) onStop() else onHome()
+    }
     CompositionLocalProvider(LocalLayoutDirection provides if (ar) LayoutDirection.Rtl else LayoutDirection.Ltr) {
         Box(Modifier.fillMaxSize().drawBehind {
             drawRect(Theme.bg)
@@ -157,10 +196,10 @@ fun SoorScreen(
             Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 TopBar(ar, onToggleLang) { sheet = Sheet.About }
                 when (ui.state) {
-                    ScanState.SCANNING -> Scanning(ui, ar)
+                    ScanState.SCANNING -> Scanning(ui, ar, onStop)
                     ScanState.DONE -> Results(ui, lang, knowledge, onScan, onShare,
                         onFinding = { sheet = Sheet.OfFinding(it) }, onDevice = { sheet = Sheet.OfDevice(it) })
-                    else -> Home(ui, ar, onScan)
+                    else -> Home(ui, ar, onScan, onResults)
                 }
             }
         }
@@ -264,7 +303,7 @@ private fun Note(text: String) {
 // ---- home ----
 
 @Composable
-private fun Home(ui: ScanUiState, ar: Boolean, onScan: () -> Unit) {
+private fun Home(ui: ScanUiState, ar: Boolean, onScan: () -> Unit, onResults: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(232.dp), contentAlignment = Alignment.Center) {
             Radar(Modifier.fillMaxSize(), sweeping = false)
@@ -281,6 +320,7 @@ private fun Home(ui: ScanUiState, ar: Boolean, onScan: () -> Unit) {
         V(10)
         Text(t(ar, "يعمل على جهازك، ولا يجمع أي بيانات", "Runs on your phone and collects no data"), color = Theme.ink3, fontSize = 12.5.sp)
         if (ui.state == ScanState.NO_NETWORK) { V(16); NoNetwork(ar) }
+        if (ui.lastScan != null) { V(18); LastScanCard(ui, ar, onResults) }
         V(26)
         SectionTitle(t(ar, "ماذا يفحص", "What it checks"))
         FeatureRow(DeviceKind.COMPUTER, t(ar, "كل جهاز على شبكتك", "Every device on your network"), t(ar, "وما يفتحه من منافذ وخدمات", "and the ports and services it opens"))
@@ -290,6 +330,27 @@ private fun Home(ui: ScanUiState, ar: Boolean, onScan: () -> Unit) {
         V(16)
         PrivacyNote(ar)
         V(24)
+    }
+}
+
+@Composable
+private fun LastScanCard(ui: ScanUiState, ar: Boolean, onResults: () -> Unit) {
+    val tone = toneOf(ui.findings)
+    val col = when (tone) { Tone.CRIT -> Theme.crit; Tone.HIGH -> Theme.high; Tone.MED -> Theme.med; Tone.OK -> Theme.ok }
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.panel).border(1.dp, Theme.rule, RoundedCornerShape(16.dp))
+        .clickable(role = Role.Button, onClick = onResults).padding(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(10.dp).clip(CircleShape).background(col))
+            H(8)
+            Text(t(ar, "آخر فحص", "Last scan"), color = Theme.ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            Spacer(Modifier.weight(1f))
+            Mono(when_(ui.lastScan ?: 0L), Theme.ink3)
+        }
+        V(6)
+        Text(Words.found(ui.devices.size, ar) + t(ar, "، ", ", ") + t(ar, "${ui.findings.size} ملاحظة", "${ui.findings.size} findings"),
+            color = Theme.ink2, fontSize = 13.sp)
+        V(8)
+        Text(t(ar, "عرض النتائج", "Show the results"), color = Theme.navyLite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -335,13 +396,26 @@ private fun NoNetwork(ar: Boolean) {
 // ---- scanning ----
 
 @Composable
-private fun Scanning(ui: ScanUiState, ar: Boolean) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        V(8)
-        Box(Modifier.fillMaxWidth(0.84f).aspectRatio(1f), contentAlignment = Alignment.Center) {
+private fun Scanning(ui: ScanUiState, ar: Boolean, onStop: () -> Unit) {
+    val still = LocalStill.current
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    if (!still) LaunchedEffect(Unit) { while (true) { delay(1000); now = System.currentTimeMillis() } }
+    val elapsed = now - (ui.startedAt ?: now)
+    Column(Modifier.fillMaxSize()) {
+    // everything scrolls except the stop button, which stays within reach
+    Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        V(4)
+        Stepper(ui.phase, ar)
+        V(10)
+        ui.network?.let { net ->
+            Text(t(ar, "الشبكة ", "Network ") + ltr(net.prefix + ".x") + (net.gateway?.let { "  ·  " + t(ar, "الراوتر ", "Router ") + ltr(it) } ?: ""),
+                color = Theme.ink3, fontSize = 12.5.sp, fontFamily = PlexMono)
+        }
+        V(4)
+        Box(Modifier.fillMaxWidth(0.62f).aspectRatio(1f), contentAlignment = Alignment.Center) {
             Radar(Modifier.fillMaxSize(), sweeping = true, dots = ui.liveHosts.map { radarDot(it) })
         }
-        V(14)
+        V(6)
         val title = when (ui.phase) {
             Phase.DISCOVER -> t(ar, "البحث عن الأجهزة", "Finding devices")
             Phase.PROBE -> t(ar, "فحص المنافذ", "Checking ports")
@@ -353,25 +427,83 @@ private fun Scanning(ui: ScanUiState, ar: Boolean) {
             Phase.JUDGE -> t(ar, "يرتّب المحرك ما وجده بحسب الخطورة", "The engine ranks what it found by severity")
         }
         Text(title, color = Theme.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        V(6)
+        V(4)
         Text(sub, color = Theme.ink2, fontSize = 14.sp, textAlign = TextAlign.Center, lineHeight = 22.sp)
-        V(20)
+        V(16)
         LinearProgressIndicator(progress = { ui.progress }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
             color = Theme.signal, trackColor = Theme.panel2)
-        V(18)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        V(14)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Stat("${ui.liveHosts.size}", t(ar, "الأجهزة", "Devices"), Modifier.weight(1f))
-            Stat("${ui.portsChecked}", t(ar, "المنافذ المفحوصة", "Ports checked"), Modifier.weight(1f))
+            Stat("${ui.portsChecked}", t(ar, "المنافذ", "Ports"), Modifier.weight(1f))
+            Stat(clock(elapsed), t(ar, "الوقت", "Elapsed"), Modifier.weight(1f))
         }
+        V(14)
+        LiveFeed(ui.events, ar)
+        V(16)
+    }
+    Box(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp, top = 8.dp)) {
+        Row(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(16.dp))
+            .border(1.dp, Theme.crit.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).background(Theme.crit.copy(alpha = 0.08f))
+            .clickable(role = Role.Button, enabled = !ui.stopping, onClick = onStop),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            Icon(Icons.Outlined.Close, null, tint = Theme.crit, modifier = Modifier.size(20.dp))
+            H(8)
+            Text(if (ui.stopping) t(ar, "جارٍ الإيقاف، ويُحفظ ما وُجد", "Stopping, keeping what was found") else t(ar, "أوقف الفحص", "Stop the scan"),
+                color = Theme.crit, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
     }
 }
 
 @Composable
 private fun Stat(value: String, label: String, modifier: Modifier) {
-    Column(modifier.clip(RoundedCornerShape(16.dp)).background(Theme.panel).border(1.dp, Theme.rule, RoundedCornerShape(16.dp)).padding(14.dp),
+    Column(modifier.clip(RoundedCornerShape(16.dp)).background(Theme.panel).border(1.dp, Theme.rule, RoundedCornerShape(16.dp)).padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(ltr(value), color = Theme.signal, fontSize = 26.sp, fontWeight = FontWeight.Bold, fontFamily = PlexMono)
-        Text(label, color = Theme.ink2, fontSize = 12.5.sp)
+        Text(ltr(value), color = Theme.signal, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = PlexMono)
+        Text(label, color = Theme.ink2, fontSize = 12.sp)
+    }
+}
+
+@Composable
+private fun Stepper(phase: Phase, ar: Boolean) {
+    val steps = listOf(Phase.DISCOVER to t(ar, "اكتشاف", "Discover"), Phase.PROBE to t(ar, "المنافذ", "Ports"), Phase.JUDGE to t(ar, "الحكم", "Verdict"))
+    val current = steps.indexOfFirst { it.first == phase }
+    Row(Modifier.fillMaxWidth(0.9f), verticalAlignment = Alignment.CenterVertically) {
+        steps.forEachIndexed { i, (_, label) ->
+            val done = i < current
+            val active = i == current
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(26.dp).clip(CircleShape)
+                    .background(if (done) Theme.signal else if (active) Theme.navy else Theme.panel2)
+                    .border(1.5.dp, if (active) Theme.signal else if (done) Theme.signal else Theme.rule, CircleShape), contentAlignment = Alignment.Center) {
+                    if (done) Icon(Icons.Outlined.CheckCircle, null, tint = Theme.bg, modifier = Modifier.size(16.dp))
+                    else Text("${i + 1}", color = if (active) Theme.ink else Theme.ink3, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = PlexMono)
+                }
+                V(4)
+                Text(label, color = if (active) Theme.ink else Theme.ink3, fontSize = 11.5.sp, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
+            }
+            if (i < steps.size - 1) Box(Modifier.weight(1f).padding(horizontal = 6.dp, vertical = 0.dp).padding(bottom = 18.dp).height(2.dp)
+                .background(if (i < current) Theme.signal else Theme.rule))
+        }
+    }
+}
+
+@Composable
+private fun LiveFeed(events: List<ScanEvent>, ar: Boolean) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.panel).border(1.dp, Theme.rule, RoundedCornerShape(16.dp)).padding(14.dp)) {
+        Label(t(ar, "ماذا يجري الآن", "What is happening now"))
+        V(6)
+        val shown = events.takeLast(5)
+        if (shown.isEmpty()) Text(t(ar, "يبدأ...", "Starting..."), color = Theme.ink3, fontSize = 13.sp)
+        shown.forEachIndexed { i, e ->
+            val last = i == shown.size - 1
+            Row(Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(CircleShape).background(if (last) Theme.signal else Theme.ink3))
+                H(10)
+                Text(eventText(e, ar), color = if (last) Theme.ink else Theme.ink3, fontSize = 13.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
     }
 }
 
@@ -407,14 +539,41 @@ private fun Results(
         }
         item { SectionTitle(t(ar, "أجهزة شبكتك", "Devices on your network"), ui.devices.size) }
         items(ui.devices, key = { it.ip }) { d -> DeviceRow(d, ar) { onDevice(d) } }
+        if (ui.partial) item {
+            Note(t(ar, "توقف الفحص قبل اكتماله، فالنتائج أعلاه عمّا وصل إليه فقط، وافحص من جديد لترى الشبكة كلها.",
+                      "The scan was stopped before it finished, so the results above cover only what it reached. Scan again to see the whole network."))
+        }
         if (ui.firstScan) item {
             Note(t(ar, "هذا أول فحص لهذه الشبكة، فحفظ سُور في هاتفك وحده قائمة أجهزتها ليخبرك في المرات القادمة بأي جهاز جديد يظهر عليها.",
                       "This is the first scan of this network, so Soor kept its device list on this phone only, to tell you next time about any new device."))
         }
+        item { ScanDetails(ui, ar) }
         item {
             Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SecondaryButton(t(ar, "شارك التقرير", "Share report"), Icons.Outlined.Share, onShare, Modifier.weight(1f))
                 PrimaryButton(t(ar, "افحص من جديد", "Scan again"), onScan, Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanDetails(ui: ScanUiState, ar: Boolean) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.panel).border(1.dp, Theme.rule, RoundedCornerShape(16.dp)).padding(14.dp)) {
+        Label(t(ar, "تفاصيل الفحص", "Scan details"))
+        V(6)
+        val rows = listOfNotNull(
+            ui.network?.let { t(ar, "الشبكة", "Network") to ltr(it.prefix + ".x") },
+            ui.network?.gateway?.let { t(ar, "الراوتر", "Router") to ltr(it) },
+            t(ar, "الأجهزة", "Devices") to ltr("${ui.devices.size}"),
+            t(ar, "المنافذ المفحوصة", "Ports checked") to ltr("${ui.portsChecked}"),
+            ui.durationMs?.let { t(ar, "المدة", "Duration") to ltr(clock(it)) },
+            ui.lastScan?.let { t(ar, "الوقت", "Time") to ltr(when_(it)) },
+        )
+        rows.forEach { (k, v) ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+                Text(k, color = Theme.ink2, fontSize = 13.5.sp, modifier = Modifier.weight(1f))
+                Text(v, color = Theme.ink, fontSize = 13.5.sp, fontFamily = PlexMono)
             }
         }
     }

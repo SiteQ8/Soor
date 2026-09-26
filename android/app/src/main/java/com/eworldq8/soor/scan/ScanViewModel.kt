@@ -35,6 +35,9 @@ data class DeviceInfo(
     val worst: Severity?,
 )
 
+/** One thing the scan just did, kept as data so the screen can word it in either language. */
+data class ScanEvent(val kind: String, val ip: String? = null)
+
 data class ScanUiState(
     val state: ScanState = ScanState.IDLE,
     val phase: Phase = Phase.DISCOVER,
@@ -45,6 +48,12 @@ data class ScanUiState(
     val devices: List<DeviceInfo> = emptyList(),
     val firstScan: Boolean = false,
     val lastScan: Long? = null,
+    val network: LocalNet? = null,
+    val events: List<ScanEvent> = emptyList(),
+    val startedAt: Long? = null,
+    val durationMs: Long? = null,
+    val partial: Boolean = false,
+    val stopping: Boolean = false,
 )
 
 class ScanViewModel(app: Application) : AndroidViewModel(app) {
@@ -79,6 +88,24 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
 
     fun forgetDevices() = known.forget()
 
+    private var scanner: NetworkScanner? = null
+
+    /** Stops the running scan within about a second and keeps what it found so far. */
+    fun stop() {
+        if (_ui.value.state != ScanState.SCANNING) return
+        _ui.update { it.copy(stopping = true) }
+        event("stop")
+        scanner?.cancel()
+    }
+
+    /** Back to the start, keeping the last results reachable from there. */
+    fun home() { if (_ui.value.state == ScanState.DONE) _ui.update { it.copy(state = ScanState.IDLE) } }
+
+    fun showResults() { if (_ui.value.lastScan != null) _ui.update { it.copy(state = ScanState.DONE) } }
+
+    private fun event(kind: String, ip: String? = null) =
+        _ui.update { it.copy(events = (it.events + ScanEvent(kind, ip)).takeLast(8)) }
+
     fun start() {
         if (_ui.value.state == ScanState.SCANNING) return
         val ctx = getApplication<Application>()
@@ -87,26 +114,36 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             _ui.value = _ui.value.copy(state = ScanState.NO_NETWORK)
             return
         }
-        _ui.value = ScanUiState(state = ScanState.SCANNING, progress = 0.02f)
+        _ui.value = ScanUiState(state = ScanState.SCANNING, progress = 0.02f, network = net,
+            startedAt = System.currentTimeMillis(), events = listOf(ScanEvent("start")))
         viewModelScope.launch {
             _ui.value = withContext(Dispatchers.IO) { runScan(ctx, net) }
         }
     }
 
-    private fun addHost(ip: String) = _ui.update { if (ip in it.liveHosts) it else it.copy(liveHosts = it.liveHosts + ip) }
+    private fun addHost(ip: String) {
+        val known = ip in _ui.value.liveHosts
+        _ui.update { if (ip in it.liveHosts) it else it.copy(liveHosts = it.liveHosts + ip) }
+        if (!known) event("found", ip)
+    }
 
     private fun runScan(ctx: Context, net: LocalNet): ScanUiState {
+        val scanner = NetworkScanner(ctx)
+        this.scanner = scanner
         val upnp = UPnPClient()
+        event("announce")
         val ssdp = upnp.discoverAll()
-        ssdp.keys.forEach(::addHost)
+        ssdp.keys.forEach { ip -> if (ip !in _ui.value.liveHosts) { event("announced", ip) }; addHost(ip) }
         net.gateway?.let(::addHost)
         _ui.update { it.copy(progress = 0.08f) }
 
+        event("router")
         val router = upnp.routerTable()
+        event(if (router.upnpEnabled) "upnp-on" else "upnp-off")
         _ui.update { it.copy(progress = 0.12f) }
 
-        val scanner = NetworkScanner(ctx)
         scanner.onHostFound = ::addHost
+        scanner.onProbing = { ip -> event("probe", ip) }
         scanner.onProgress = { p ->
             val discovering = p.phase == "discovering"
             val frac = p.done.toFloat() / max(1, p.total)
@@ -119,7 +156,10 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         val hosts = scanner.scan(net, ssdp.keys + listOfNotNull(net.gateway), router.exposed)
+        val stopped = scanner.cancelled
+        this.scanner = null
         _ui.update { it.copy(phase = Phase.JUDGE, progress = 0.95f) }
+        event("judge")
 
         // a device is new when this network has been scanned before and it was not on it
         val key = KnownDevices.networkKey(net)
@@ -159,11 +199,13 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             )
         }.sortedWith(compareBy({ !it.isGateway }, { it.worst?.order ?: 9 }, { it.ip.substringAfterLast('.').toIntOrNull() ?: 0 }))
 
+        val now = System.currentTimeMillis()
         return ScanUiState(
             state = ScanState.DONE, phase = Phase.JUDGE, progress = 1f,
             liveHosts = hosts.map { it.ip }, portsChecked = _ui.value.portsChecked,
             findings = findings, devices = devices, firstScan = seen == null,
-            lastScan = System.currentTimeMillis(),
+            lastScan = now, network = net, startedAt = _ui.value.startedAt,
+            durationMs = _ui.value.startedAt?.let { now - it }, partial = stopped,
         )
     }
 
