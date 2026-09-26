@@ -372,12 +372,47 @@ final class NetworkScanner {
                         let ip = String(cString: host)
                         let parts = ip.split(separator: ".")
                         if parts.count == 4, LocalOnly.isAllowed(ip) {
-                            return LocalNet(ip: ip, prefix: parts[0...2].joined(separator: "."), gateway: nil)
+                            let gw = defaultGateway().flatMap { LocalOnly.isAllowed($0) ? $0 : nil }
+                            return LocalNet(ip: ip, prefix: parts[0...2].joined(separator: "."), gateway: gw)
                         }
                     }
                 }
             }
             ptr = p.pointee.ifa_next
+        }
+        return nil
+    }
+
+    /// The default route's gateway, read from the kernel's routing table, so the
+    /// router is known rather than guessed: many homes use .1, not all of them.
+    static func defaultGateway() -> String? {
+        // net/route.h is not public on iOS, so the kernel constants are written out:
+        // NET_RT_FLAGS 2, RTF_GATEWAY 0x2, RTA_DST 0x1, RTA_GATEWAY 0x2
+        let rtfGateway: Int32 = 0x2, rtaDst: Int32 = 0x1, rtaGateway: Int32 = 0x2
+        var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, AF_INET, 2, rtfGateway]
+        var len: Int = 0
+        guard sysctl(&mib, UInt32(mib.count), nil, &len, nil, 0) == 0, len > 0 else { return nil }
+        var buf = [UInt8](repeating: 0, count: len)
+        guard sysctl(&mib, UInt32(mib.count), &buf, &len, nil, 0) == 0 else { return nil }
+        var offset = 0
+        while offset + 4 <= len {
+            let msglen = Int(buf[offset]) | (Int(buf[offset + 1]) << 8)
+            guard msglen > 0 else { break }
+            let flags = Int32(bitPattern: UInt32(buf[offset + 8]) | (UInt32(buf[offset + 9]) << 8) | (UInt32(buf[offset + 10]) << 16) | (UInt32(buf[offset + 11]) << 24))
+            let addrs = Int32(bitPattern: UInt32(buf[offset + 12]) | (UInt32(buf[offset + 13]) << 8) | (UInt32(buf[offset + 14]) << 16) | (UInt32(buf[offset + 15]) << 24))
+            // the sockaddrs follow the header; the header is 96 bytes on this kernel,
+            // and the first sockaddr announces itself with its length and family
+            var p = offset + 96
+            if !(p + 2 <= len && buf[p] == 16 && buf[p + 1] == UInt8(AF_INET)) { p = offset + 92 }
+            if (flags & rtfGateway) != 0, (addrs & rtaDst) != 0, (addrs & rtaGateway) != 0,
+               p + 16 <= len, buf[p] == 16, buf[p + 1] == UInt8(AF_INET) {
+                let dstZero = buf[p + 4] == 0 && buf[p + 5] == 0 && buf[p + 6] == 0 && buf[p + 7] == 0
+                let g = p + 16
+                if dstZero, g + 8 <= len, buf[g + 1] == UInt8(AF_INET) {
+                    return "\(buf[g + 4]).\(buf[g + 5]).\(buf[g + 6]).\(buf[g + 7])"
+                }
+            }
+            offset += msglen
         }
         return nil
     }

@@ -103,13 +103,13 @@ final class ScanCoordinator: ObservableObject {
         event("router")
         let upnp = UPnPClient()
         let router: UPnPResult = await withCheckedContinuation { c in
-            upnp.routerTable(candidates: ["\(net.prefix).1", "\(net.prefix).254"]) { c.resume(returning: $0) }
+            upnp.routerTable(candidates: Array(NSOrderedSet(array: [net.gateway, "\(net.prefix).1", "\(net.prefix).254"].compactMap { $0 })) as? [String] ?? ["\(net.prefix).1"]) { c.resume(returning: $0) }
         }
         upnpEnabled = router.upnpEnabled
         event(router.upnpEnabled ? "upnp-on" : "upnp-off")
         checks = NetworkChecks.run(externalIp: router.externalIp)
         var full = net
-        full.gateway = router.gateway ?? "\(net.prefix).1"
+        full.gateway = router.gateway ?? net.gateway ?? "\(net.prefix).1"
         let gw = full.gateway ?? "\(net.prefix).1"
         network = full
         addHost(gw)
