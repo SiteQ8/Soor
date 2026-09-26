@@ -83,6 +83,42 @@ final class ScanCoordinator: ObservableObject {
         state = .done
     }
 
+    // MARK: - Demo for the store screenshots
+    //
+    // A sample home, judged by the real engine exactly as a scan is, so the
+    // screenshots show what the app shows for that home. Reached only through
+    // the launch argument -soor-demo, which nothing sets in normal use.
+
+    func loadDemo() {
+        var router = Observation(host: "192.168.1.1", port: 80)
+        router.httpServer = "Router Webserver"; router.banner = "WWW-Authenticate: Basic realm"
+        var upnp = Observation(host: "192.168.1.1", port: 1900)
+        upnp.banner = "UPnP/1.1 IGD rootDevice"
+        var tls = Observation(host: "192.168.1.1", port: 443)
+        tls.banner = "self-signed certificate"
+        var camera = Observation(host: "192.168.1.64", port: 554)
+        camera.rtspServer = "Hipcam RealServer/V1.0"; camera.noAuth = true; camera.internetExposed = true
+        let box = Observation(host: "192.168.1.90", port: 5555)
+        var printer = Observation(host: "192.168.1.30", port: 80)
+        printer.httpServer = "HP HTTP Server"; printer.httpTitle = "Printer"; printer.banner = "WWW-Authenticate: Basic realm"
+        var laptop = Observation(host: "192.168.1.10", port: 22)
+        laptop.banner = "SSH-2.0-OpenSSH_9.6"
+        var mystery = Observation(host: "192.168.1.150", port: 0)
+        mystery.isNew = true
+        let obs = [router, upnp, tls, camera, box, printer, laptop, mystery]
+        deviceCount = Set(obs.map { $0.host }).count
+        findings = SoorEngine.analyse(observations: obs, services: knowledge.services, cameras: knowledge.cameras)
+        upnpEnabled = true
+        lastScan = Date()
+        state = .done
+    }
+
+    func demoScanning(lang: Lang) {
+        state = .scanning
+        progressValue = 0.62
+        progressText = lang == .ar ? "فحص المنافذ… 9/14" : "Probing ports… 9/14"
+    }
+
     func summary() -> [Severity: Int] { SoorEngine.summarise(findings) }
 
     func reportText(lang: Lang) -> String {

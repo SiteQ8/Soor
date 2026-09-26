@@ -1,0 +1,72 @@
+# Photographs سُور on an iPhone simulator, with iOS's own status bar, in both
+# languages and on every screen, so the App Store shows the real app. Run it
+# from the Actions tab; the pictures come back as an artifact.
+name: iOS screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  shots:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest installed Xcode
+        run: |
+          latest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "$latest"
+          xcodebuild -version
+
+      - name: Build for the simulator
+        working-directory: ios/Soor
+        run: |
+          set -o pipefail
+          xcodebuild -project Soor.xcodeproj -scheme Soor -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -3
+          app=$(find build -name 'Soor.app' -path '*iphonesimulator*' | head -1)
+          [ -n "$app" ] || { echo "no app built"; exit 1; }
+          echo "APP=$PWD/$app" >> "$GITHUB_ENV"
+
+      - name: Photograph every screen
+        run: |
+          set -euo pipefail
+          pick() {
+            xcrun simctl list devices available -j | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)['devices']
+          print(next((x['udid'] for xs in d.values() for x in xs if x['name'] == '$1'), ''))"
+          }
+          UDID=""
+          for name in "iPhone 16 Plus" "iPhone 15 Plus" "iPhone 14 Plus" "iPhone 16 Pro Max"; do
+            UDID=$(pick "$name"); [ -n "$UDID" ] && { echo "device: $name"; break; }
+          done
+          [ -n "$UDID" ] || { xcrun simctl list devices available; exit 1; }
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl ui "$UDID" appearance dark
+          # iOS's own status bar, set the way Apple's marketing shots set it
+          xcrun simctl status_bar "$UDID" override --time "9:41" --dataNetwork wifi --wifiMode active \
+            --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p shots
+          shoot() {  # language locale scene index
+            xcrun simctl launch --terminate-running-process "$UDID" com.eworldq8.soor \
+              -AppleLanguages "($1)" -AppleLocale "$2" -soor-demo "$3" > /dev/null
+            sleep 6
+            xcrun simctl io "$UDID" screenshot "shots/$1-$4-$3.png"
+          }
+          for pair in "home 1" "scanning 2" "results 3" "detail 4" "about 5"; do
+            set -- $pair
+            shoot ar ar_KW "$1" "$2"
+            shoot en en_US "$1" "$2"
+          done
+          ls -la shots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: shots/*.png
+          retention-days: 7

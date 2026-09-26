@@ -43,6 +43,24 @@ struct ScanView: View {
             .sheet(isPresented: $showShare) {
                 ShareSheet(text: coord.reportText(lang: app.lang))
             }
+            .onAppear { applyDemoIfAsked() }
+        }
+    }
+
+    /// The store screenshots are taken from the real app on the simulator: the
+    /// launch argument -soor-demo <scene> opens the app on that scene with a
+    /// sample home. Nothing sets it in normal use.
+    private func applyDemoIfAsked() {
+        let args = ProcessInfo.processInfo.arguments
+        guard let i = args.firstIndex(of: "-soor-demo"), i + 1 < args.count else { return }
+        switch args[i + 1] {
+        case "scanning": coord.demoScanning(lang: app.lang)
+        case "results": coord.loadDemo()
+        case "detail":
+            coord.loadDemo()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { selected = coord.findings.first }
+        case "about": showAbout = true
+        default: break
         }
     }
 
