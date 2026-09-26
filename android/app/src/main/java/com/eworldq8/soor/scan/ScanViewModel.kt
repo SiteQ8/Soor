@@ -46,6 +46,8 @@ data class ScanUiState(
     val portsChecked: Int = 0,
     val findings: List<Finding> = emptyList(),
     val devices: List<DeviceInfo> = emptyList(),
+    val newFindings: Set<String> = emptySet(),
+    val fixedCount: Int = 0,
     val firstScan: Boolean = false,
     val lastScan: Long? = null,
     val network: LocalNet? = null,
@@ -130,6 +132,9 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
     private fun runScan(ctx: Context, net: LocalNet): ScanUiState {
         val scanner = NetworkScanner(ctx)
         this.scanner = scanner
+        val names = Names(ctx)
+        // Bonjour listens while the rest of the scan runs
+        val bonjour = java.util.concurrent.Executors.newSingleThreadExecutor().submit<Map<String, Names.Found>> { names.bonjour(5) }
         val upnp = UPnPClient()
         event("announce")
         val ssdp = upnp.discoverAll()
@@ -158,6 +163,10 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
         val hosts = scanner.scan(net, ssdp.keys + listOfNotNull(net.gateway), router.exposed)
         val stopped = scanner.cancelled
         this.scanner = null
+        val announced = runCatching { bonjour.get(6, java.util.concurrent.TimeUnit.SECONDS) }.getOrDefault(emptyMap())
+        val pcNames = hosts.filter { h -> h.openPorts.any { it == 139 || it == 445 } && h.ip !in announced }
+            .associate { h -> h.ip to names.netbios(h.ip) }.filterValues { it != null }
+        (announced.keys + pcNames.keys).distinct().take(6).forEach { ip -> event("named", ip) }
         _ui.update { it.copy(phase = Phase.JUDGE, progress = 0.95f) }
         event("judge")
 
@@ -185,13 +194,22 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
         val findings = SoorEngine.analyse(observations, knowledge.services, knowledge.cameras)
         known.remember(key, ids)
 
+        // what changed since the last scan of this network, if there was one
+        val sigs = findings.map { KnownDevices.signature(it) }.toSet()
+        val previous = known.lastFindings(key)
+        val newFindings = if (previous == null || stopped) emptySet() else sigs - previous
+        val fixedCount = if (previous == null || stopped) 0 else (previous - sigs).size
+        if (!stopped) known.rememberFindings(key, sigs)
+
         val devices = hosts.map { h ->
             val cameraVendor = h.observations.any { SoorEngine.matchCamera(it, knowledge.cameras) != null }
             val ports = h.openPorts + if (h.ip == gw && router.upnpEnabled && 1900 !in h.openPorts) listOf(1900) else emptyList()
+            val found = announced[h.ip]
             DeviceInfo(
                 ip = h.ip,
-                name = ssdp[h.ip]?.friendlyName,
-                kind = DeviceKinds.guess(ports.toSet(), ssdp[h.ip], h.ip == gw, cameraVendor),
+                name = found?.name ?: pcNames[h.ip] ?: ssdp[h.ip]?.friendlyName,
+                kind = DeviceKinds.guess(ports.toSet(), ssdp[h.ip], h.ip == gw, cameraVendor,
+                    hint = listOfNotNull(found?.service, found?.name, pcNames[h.ip]).joinToString(" ")),
                 ports = ports.sorted(),
                 isGateway = h.ip == gw,
                 isNew = h.ip in newHosts,
@@ -204,6 +222,7 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             state = ScanState.DONE, phase = Phase.JUDGE, progress = 1f,
             liveHosts = hosts.map { it.ip }, portsChecked = _ui.value.portsChecked,
             findings = findings, devices = devices, firstScan = seen == null,
+            newFindings = newFindings, fixedCount = fixedCount,
             lastScan = now, network = net, startedAt = _ui.value.startedAt,
             durationMs = _ui.value.startedAt?.let { now - it }, partial = stopped,
         )

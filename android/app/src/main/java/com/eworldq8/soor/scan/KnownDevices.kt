@@ -19,7 +19,12 @@ class KnownDevices(context: Context) {
 
     fun forget() { prefs.edit().clear().apply() }
 
+    /** the findings of the last scan of a network, by signature, so the next scan can say what changed */
+    fun lastFindings(network: String): Set<String>? = prefs.getStringSet("findings:$network", null)?.toSet()
+    fun rememberFindings(network: String, sigs: Set<String>) { prefs.edit().putStringSet("findings:$network", sigs).apply() }
+
     companion object {
+        fun signature(f: com.eworldq8.soor.engine.Finding) = "${f.kind}|${f.host}|${f.port}"
         fun networkKey(net: LocalNet) = "net:" + (net.gateway ?: net.prefix)
 
         /** a device's own UPnP identity when it has one, since addresses can change */

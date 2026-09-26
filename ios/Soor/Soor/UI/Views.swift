@@ -126,6 +126,23 @@ struct AboutView: View {
                     block(ar ? "شبكتك وحدها" : "Your network only",
                           ar ? "يفحص الشبكة المتصل بها الهاتف ولا يتجاوز عناوينها الخاصة."
                              : "It scans the network the phone is on and does not go beyond its private addresses.")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(ar ? "من صنع سُور" : "Who made Soor")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.signal)
+                        Text(ar ? "علي العنزي" : "Ali AlEnezi")
+                            .font(.headline)
+                            .foregroundStyle(Theme.ink(scheme))
+                        Text(ar ? "مشروع مفتوح المصدر من الكويت، للناس لا للشركات"
+                                : "An open source project from Kuwait, for people rather than companies")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.ink2(scheme))
+                        Link("site@hotmail.com", destination: URL(string: "mailto:site@hotmail.com")!)
+                            .font(.footnote.monospaced())
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.panel(scheme), in: RoundedRectangle(cornerRadius: 14))
                     Link(ar ? "الشيفرة المصدرية على GitHub" : "Source code on GitHub",
                          destination: URL(string: "https://github.com/SiteQ8/Soor")!)
                         .font(.subheadline).foregroundStyle(Theme.navy)

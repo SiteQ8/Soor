@@ -10,12 +10,17 @@ enum class DeviceKind { ROUTER, CAMERA, TV, NAS, COMPUTER, PHONE, PRINTER, IOT, 
 object DeviceKinds {
     private val CAMERA_PORTS = setOf(554, 8554, 34567, 37777, 2020, 8899)
 
-    fun guess(ports: Set<Int>, ssdp: SsdpDevice?, isGateway: Boolean, cameraVendor: Boolean): DeviceKind {
-        val text = listOfNotNull(ssdp?.friendlyName, ssdp?.manufacturer, ssdp?.modelName, ssdp?.deviceType, ssdp?.server)
+    fun guess(ports: Set<Int>, ssdp: SsdpDevice?, isGateway: Boolean, cameraVendor: Boolean, hint: String = ""): DeviceKind {
+        val text = listOfNotNull(hint, ssdp?.friendlyName, ssdp?.manufacturer, ssdp?.modelName, ssdp?.deviceType, ssdp?.server)
             .joinToString(" ").lowercase()
         fun has(vararg words: String) = words.any { text.contains(it) }
         return when {
             isGateway || has("internetgatewaydevice", "router") -> DeviceKind.ROUTER
+            has("_companion-link", "_rdlink") && !has("macbook", "imac", "mac mini") -> DeviceKind.PHONE
+            has("_airplay", "_raop", "_googlecast", "apple tv") -> DeviceKind.TV
+            has("_ipp", "_printer") -> DeviceKind.PRINTER
+            has("_smb", "_ssh", "_workstation", "macbook", "imac", "desktop-", "laptop") -> DeviceKind.COMPUTER
+            has("_hap", "_sonos", "_spotify") -> DeviceKind.IOT
             cameraVendor || ports.any { it in CAMERA_PORTS } || has("camera", "ipcam", "nvr", "dvr") -> DeviceKind.CAMERA
             ports.any { it in setOf(9100, 631, 515) } || has("printer", "laserjet", "deskjet", "officejet") -> DeviceKind.PRINTER
             ports.any { it in setOf(8008, 8009, 7000, 5555) } || has("mediarenderer", "chromecast", "roku", "television", "smart tv", " tv") -> DeviceKind.TV

@@ -77,7 +77,7 @@ class LocalOnlyTest {
                 }
             }
         }
-        assertEquals("expected the six places the scanner connects", 6, found)
+        assertEquals("expected the seven places the scanner connects", 7, found)
     }
 
     @Test

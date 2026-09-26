@@ -37,7 +37,9 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -136,6 +138,7 @@ private fun eventText(e: ScanEvent, ar: Boolean): String {
         "upnp-off" -> t(ar, "UPnP معطّل في الراوتر", "UPnP is off at the router")
         "found" -> t(ar, "عُثر على $ip", "Found $ip")
         "probe" -> t(ar, "يفحص منافذ $ip", "Checking the ports of $ip")
+        "named" -> t(ar, "عرف اسم $ip", "Learned the name of $ip")
         "judge" -> t(ar, "المحرك يرتّب ما وجده", "The engine ranks what it found")
         "stop" -> t(ar, "أوقفتَ الفحص", "You stopped the scan")
         else -> e.kind
@@ -207,7 +210,7 @@ fun SoorScreen(
             is Sheet.About -> AboutSheet(ar, onDismiss = { sheet = null }, onForget = onForget, onOpen = onOpen)
             is Sheet.OfFinding -> FindingSheet(s.finding, ui.devices.firstOrNull { it.ip == s.finding.host }, knowledge, lang) { sheet = null }
             is Sheet.OfDevice -> DeviceSheet(s.device, ui.findings.filter { it.host == s.device.ip }, knowledge, lang,
-                onFinding = { sheet = Sheet.OfFinding(it) }) { sheet = null }
+                onFinding = { sheet = Sheet.OfFinding(it) }, onOpen = onOpen) { sheet = null }
             null -> {}
         }
     }
@@ -532,7 +535,8 @@ private fun Results(
         if (ui.findings.isNotEmpty()) {
             item { SectionTitle(t(ar, "ما يستحق انتباهك", "Worth your attention"), ui.findings.size) }
             items(ui.findings, key = { "${it.kind}|${it.host}|${it.port}" }) { f ->
-                FindingCard(f, ui.devices.firstOrNull { it.ip == f.host }, knowledge, lang) { onFinding(f) }
+                FindingCard(f, ui.devices.firstOrNull { it.ip == f.host }, knowledge, lang,
+                    isNew = "${f.kind}|${f.host}|${f.port}" in ui.newFindings) { onFinding(f) }
             }
         } else {
             item { CleanCard(ar) }
@@ -590,7 +594,8 @@ private fun StatusBanner(ui: ScanUiState, ar: Boolean) {
         Tone.OK -> t(ar, "السور سليم ولا شيء يستحق القلق", "The wall holds and nothing needs worrying about")
     }
     val newCount = ui.devices.count { it.isNew }
-    val sub = Words.found(ui.devices.size, ar) + if (newCount > 0) t(ar, "، ", ", ") + Words.newOnes(newCount, ar) else ""
+    var sub = Words.found(ui.devices.size, ar) + if (newCount > 0) t(ar, "، ", ", ") + Words.newOnes(newCount, ar) else ""
+    if (ui.fixedCount > 0) sub += t(ar, "، و", ", and ") + Words.fixed(ui.fixedCount, ar)
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
         .background(Brush.verticalGradient(listOf(col.copy(alpha = 0.18f), Theme.panel)))
         .border(1.dp, col.copy(alpha = 0.45f), RoundedCornerShape(20.dp)).padding(18.dp)) {
@@ -629,7 +634,7 @@ private fun CleanCard(ar: Boolean) {
 }
 
 @Composable
-private fun FindingCard(f: Finding, device: DeviceInfo?, k: Knowledge, lang: Lang, onClick: () -> Unit) {
+private fun FindingCard(f: Finding, device: DeviceInfo?, k: Knowledge, lang: Lang, isNew: Boolean = false, onClick: () -> Unit) {
     val r = SoorReport.render(f, k, lang)
     val col = Theme.severity(f.severity)
     val ar = lang == Lang.AR
@@ -639,6 +644,7 @@ private fun FindingCard(f: Finding, device: DeviceInfo?, k: Knowledge, lang: Lan
         Column(Modifier.weight(1f).padding(14.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 SevChip(r.severityLabel, col)
+                if (isNew) { H(6); Badge(t(ar, "جديد", "New"), Theme.signal) }
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
                     Mono(hostPort(f))
@@ -728,7 +734,7 @@ private fun FindingSheet(f: Finding, device: DeviceInfo?, k: Knowledge, lang: La
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: Lang, onFinding: (Finding) -> Unit, onDismiss: () -> Unit) {
+private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: Lang, onFinding: (Finding) -> Unit, onOpen: (String) -> Unit, onDismiss: () -> Unit) {
     val ar = lang == Lang.AR
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Theme.panel, dragHandle = { BottomSheetDefaults.DragHandle(color = Theme.rule) }) {
@@ -746,6 +752,11 @@ private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: La
                 if (d.isNew) Badge(t(ar, "جديد", "New"), Theme.signal)
             }
             if (d.isNew) { V(12); Note(t(ar, "لم يرَ سُور هذا الجهاز على شبكتك من قبل، فتحقّق أنك تعرفه.", "Soor has not seen this device on your network before, so check that you know it.")) }
+            if (d.isGateway && d.ports.any { it == 80 || it == 443 || it == 8080 }) {
+                V(12)
+                SecondaryButton(t(ar, "افتح لوحة الراوتر في المتصفح", "Open the router's page in the browser"), Icons.Outlined.Settings,
+                    { onOpen((if (443 in d.ports && 80 !in d.ports) "https://" else "http://") + d.ip + "/") }, Modifier.fillMaxWidth())
+            }
             V(18)
             Label(t(ar, "المنافذ المفتوحة", "Open ports"))
             V(6)
@@ -778,7 +789,13 @@ private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: La
 private fun AboutSheet(ar: Boolean, onDismiss: () -> Unit, onForget: () -> Unit, onOpen: (String) -> Unit) {
     val context = LocalContext.current
     @Suppress("DEPRECATION")
-    val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
+    val version = remember {
+        runCatching {
+            val info = context.packageManager.getPackageInfo(context.packageName, 0)
+            val code = if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+            "${info.versionName} (${code})"
+        }.getOrNull() ?: ""
+    }
     var forgotten by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Theme.panel, dragHandle = { BottomSheetDefaults.DragHandle(color = Theme.rule) }) {
@@ -789,6 +806,20 @@ private fun AboutSheet(ar: Boolean, onDismiss: () -> Unit, onForget: () -> Unit,
                 Column {
                     Text(t(ar, "سُور", "Soor"), color = Theme.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     Text(t(ar, "فاحص أمان شبكة البيت", "Home network security scanner") + if (version.isNotEmpty()) "  ·  ${ltr(version)}" else "", color = Theme.ink2, fontSize = 13.sp)
+                }
+            }
+            V(14)
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.bg2).border(1.dp, Theme.rule, RoundedCornerShape(16.dp)).padding(14.dp)) {
+                Label(t(ar, "من صنع سُور", "Who made Soor"))
+                V(6)
+                Text(t(ar, "علي العنزي", "Ali AlEnezi"), color = Theme.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text(t(ar, "مشروع مفتوح المصدر من الكويت، للناس لا للشركات", "An open source project from Kuwait, for people rather than companies"), color = Theme.ink2, fontSize = 13.sp, lineHeight = 20.sp)
+                V(10)
+                Row(Modifier.clip(RoundedCornerShape(10.dp)).background(Theme.navy.copy(alpha = 0.22f)).clickable(role = Role.Button) { onOpen("mailto:site@hotmail.com") }
+                    .padding(horizontal = 12.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Email, null, tint = Theme.signal, modifier = Modifier.size(18.dp))
+                    H(8)
+                    Text(ltr("site@hotmail.com"), color = Theme.ink, fontSize = 14.sp, fontFamily = PlexMono)
                 }
             }
             V(16)
@@ -803,9 +834,9 @@ private fun AboutSheet(ar: Boolean, onDismiss: () -> Unit, onForget: () -> Unit,
                 t(ar, "لا يتصل إلا بعناوين داخل شبكة بيتك، إذ في شيفرته قاعدة ترفض أي عنوان خارجها قبل الاتصال به، ولا يفحص عبر بيانات الجوال أبدًا.",
                       "It only connects to addresses inside your home network: a rule in its code refuses any other address before connecting, and it never scans over mobile data."))
             AboutBlock(Icons.Outlined.Info, t(ar, "لا يجمع بياناتك", "It collects nothing"),
-                t(ar, "لا حساب فيه ولا خادم، ولا يحفظ في هاتفك إلا قائمة الأجهزة التي رآها في شبكتك ليخبرك بالجديد منها، ويمكنك مسحها من هنا.",
-                      "No account and no server. The only thing it keeps on your phone is the list of devices it has seen on your network, to tell you about new ones, and you can erase it here."))
-            V(4)
+                t(ar, "لا حساب فيه ولا خادم، ولا يحفظ في هاتفك إلا قائمة الأجهزة التي رآها في شبكتك وملخص آخر فحص ليخبرك بما تغيّر، ويمكنك مسحهما من هنا.",
+                      "No account and no server. The only things it keeps on your phone are the list of devices it has seen on your network and a summary of the last scan, to tell you what changed, and you can erase them here."))
+            V(12)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pill(t(ar, "الموقع", "Website")) { onOpen("https://soor.3li.info/") }
                 Pill(t(ar, "الخصوصية", "Privacy")) { onOpen("https://soor.3li.info/privacy.html") }

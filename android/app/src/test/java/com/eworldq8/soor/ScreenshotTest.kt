@@ -76,8 +76,8 @@ class ScreenshotTest {
             dev("192.168.1.64", null, DeviceKind.CAMERA, listOf(554)),
             dev("192.168.1.90", "Living Room TV", DeviceKind.TV, listOf(5555, 8008, 8009)),
             dev("192.168.1.30", "Office Printer", DeviceKind.PRINTER, listOf(80, 631, 9100)),
-            dev("192.168.1.10", null, DeviceKind.COMPUTER, listOf(22)),
-            dev("192.168.1.42", null, DeviceKind.PHONE, listOf(62078)),
+            dev("192.168.1.10", "DESKTOP-7K2QA", DeviceKind.COMPUTER, listOf(22)),
+            dev("192.168.1.42", "Ali's iPhone", DeviceKind.PHONE, listOf(62078)),
             dev("192.168.1.150", null, DeviceKind.UNKNOWN, emptyList(), new = true),
         )
     }
@@ -85,7 +85,8 @@ class ScreenshotTest {
     private val results by lazy {
         ScanUiState(state = ScanState.DONE, phase = Phase.JUDGE, progress = 1f, liveHosts = devices.map { it.ip },
             portsChecked = 1834, findings = findings, devices = devices, lastScan = 1758880800000L, network = net,
-            startedAt = 1758880752000L, durationMs = 48000L)
+            startedAt = 1758880752000L, durationMs = 48000L, fixedCount = 2,
+            newFindings = setOf("exposed-camera-default|192.168.1.64|554"))
     }
     private val scanning = ScanUiState(state = ScanState.SCANNING, phase = Phase.PROBE, progress = 0.62f,
         liveHosts = listOf("192.168.1.1", "192.168.1.64", "192.168.1.90", "192.168.1.30", "192.168.1.10"), portsChecked = 1287,

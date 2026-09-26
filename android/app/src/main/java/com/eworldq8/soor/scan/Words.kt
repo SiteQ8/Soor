@@ -14,6 +14,15 @@ object Words {
         else -> "وجد سُور $n جهازًا على شبكتك"
     }
 
+    fun fixed(n: Int, ar: Boolean): String = if (!ar) {
+        if (n == 1) "1 finding from the last scan is gone" else "$n findings from the last scan are gone"
+    } else when {
+        n == 1 -> "زالت ملاحظة واحدة من الفحص السابق"
+        n == 2 -> "زالت ملاحظتان من الفحص السابق"
+        n in 3..10 -> "زالت $n ملاحظات من الفحص السابق"
+        else -> "زالت $n ملاحظة من الفحص السابق"
+    }
+
     fun newOnes(n: Int, ar: Boolean): String = if (!ar) {
         if (n == 1) "1 of them is new" else "$n of them are new"
     } else when {
