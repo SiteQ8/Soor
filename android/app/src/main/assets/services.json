@@ -46,10 +46,10 @@
       "match": ["ADB", "host:"],
       "category": "androidbox",
       "severity": "critical",
-      "name": { "ar": "منفذ تصحيح أخطاء أندرويد", "en": "Android debug bridge" },
+      "name": { "ar": "منفذ تصحيح الأخطاء (ADB)", "en": "Debug port (ADB)" },
       "what": {
-        "ar": "منفذ تصحيح أخطاء مفتوح في جهاز أندرويد مثل أجهزة البث، ومن يصل إليه يثبّت تطبيقات ويتحكم بالجهاز كله دون كلمة مرور.",
-        "en": "An open debug port on an Android device such as a streaming box. Whoever reaches it can install apps and fully control the device with no password."
+        "ar": "منفذ تصحيح أخطاء مفتوح في جهاز بث أو تلفاز ذكي، ومن يصل إليه يثبّت تطبيقات ويتحكم بالجهاز كله دون كلمة مرور.",
+        "en": "An open debugging port on a streaming or TV box. Whoever reaches it can install apps and fully control the device with no password."
       },
       "fix": {
         "ar": "أطفئ تصحيح الأخطاء عبر الشبكة في إعدادات الجهاز، وإن كان صندوق بث مجهول العلامة ففكّر في استبداله.",
