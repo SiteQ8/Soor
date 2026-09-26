@@ -23,6 +23,9 @@ import kotlin.math.max
 // keeps the screen informed while it does.
 
 enum class ScanState { IDLE, SCANNING, DONE, NO_NETWORK }
+
+/** What stands between a tap and a scan: the one-time consent, or a warning that the network looks public. */
+enum class Gate { CONSENT, PUBLIC }
 enum class Phase { DISCOVER, PROBE, JUDGE }
 
 data class DeviceInfo(
@@ -60,6 +63,8 @@ data class ScanUiState(
     val durationMs: Long? = null,
     val partial: Boolean = false,
     val stopping: Boolean = false,
+    val gate: Gate? = null,
+    val publicSigns: List<String> = emptyList(),
 )
 
 class ScanViewModel(app: Application) : AndroidViewModel(app) {
@@ -120,9 +125,20 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
     private fun event(kind: String, ip: String? = null) =
         _ui.update { it.copy(events = (it.events + ScanEvent(kind, ip)).takeLast(8)) }
 
-    fun start() {
+    fun consent() { known.consent(); _ui.update { it.copy(gate = null) } }
+
+    fun closeGate() { _ui.update { it.copy(gate = null) } }
+
+    /** [force] scans a network that looks public, after the person has said they are responsible for it. */
+    fun start(force: Boolean = false) {
         if (_ui.value.state == ScanState.SCANNING) return
         val ctx = getApplication<Application>()
+        if (!known.consented()) { _ui.update { it.copy(gate = Gate.CONSENT) }; return }
+        if (!force) {
+            val signs = PublicNetwork.signs(ctx)
+            if (signs.isNotEmpty()) { _ui.update { it.copy(gate = Gate.PUBLIC, publicSigns = signs) }; return }
+        }
+        _ui.update { it.copy(gate = null) }
         val net = NetworkScanner.localNet(ctx)
         if (net == null) {
             _ui.value = _ui.value.copy(state = ScanState.NO_NETWORK)

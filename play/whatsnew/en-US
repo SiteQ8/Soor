@@ -1,1 +1,1 @@
-Checks of the network itself: Wi-Fi encryption, DNS servers and IPv6, your home's internet address with what Shodan sees at it, and naming devices with names you know.
+A one-time confirmation before the first scan that the network is yours, and a warning when the network looks public, by a sign-in page or unencrypted Wi-Fi.

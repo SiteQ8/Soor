@@ -497,7 +497,13 @@ enum KnownDevices {
         for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("devices.") || key.hasPrefix("findings.") {
             defaults.removeObject(forKey: key)
         }
+        // erasing the memory also brings back the one-time notice about scanning one's own network
+        defaults.removeObject(forKey: "consent")
     }
+
+    /// the person has confirmed, once, that the network they scan is their own
+    static var consented: Bool { defaults.bool(forKey: "consent") }
+    static func consent() { defaults.set(true, forKey: "consent") }
 }
 
 // MARK: - The names devices give themselves

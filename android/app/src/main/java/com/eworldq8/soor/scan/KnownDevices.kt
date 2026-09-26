@@ -19,6 +19,10 @@ class KnownDevices(context: Context) {
 
     fun forget() { prefs.edit().clear().apply() }
 
+    /** the person has confirmed, once, that the network they scan is their own */
+    fun consented(): Boolean = prefs.getBoolean("consent", false)
+    fun consent() { prefs.edit().putBoolean("consent", true).apply() }
+
     /** the name the person gave a device, kept by the device's identity so it survives an address change */
     fun label(id: String): String? = prefs.getString("label:$id", null)
     fun setLabel(id: String, name: String?) {

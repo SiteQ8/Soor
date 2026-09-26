@@ -29,6 +29,7 @@ final class ScanCoordinator: ObservableObject {
     enum State: Equatable { case idle, scanning, done, noNetwork }
     enum Phase { case discover, probe, judge }
 
+    @Published var needsConsent = false
     @Published var state: State = .idle
     @Published var phase: Phase = .discover
     @Published var progress: Double = 0
@@ -54,6 +55,8 @@ final class ScanCoordinator: ObservableObject {
     private let names = DispatchQueue(label: "soor.names", attributes: .concurrent)
 
     func start() {
+        // the one-time notice comes first, whichever button started the scan
+        if !KnownDevices.consented { needsConsent = true; return }
         guard state != .scanning else { return }
         guard let net = NetworkScanner.localNet() else { state = .noNetwork; return }
         state = .scanning

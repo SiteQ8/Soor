@@ -52,6 +52,9 @@ struct ScanView: View {
             }
         }
         .sheet(isPresented: $showShare) { ShareSheet(text: coord.reportText(lang: app.lang)) }
+        .sheet(isPresented: $coord.needsConsent) {
+            ConsentView(ar: ar) { KnownDevices.consent(); coord.needsConsent = false; coord.start() }
+        }
         .onAppear { applyDemoIfAsked() }
     }
 
@@ -141,7 +144,7 @@ struct HomeScreen: View {
                          "See every device on it, the ports each one opens, and what is exposed to the internet"))
                     .font(Theme.font(15)).foregroundStyle(Theme.ink2).multilineTextAlignment(.center).lineSpacing(5).padding(.top, 8)
                 PrimaryButton(text: t(ar, "افحص شبكتي", "Scan my network")) { coord.start() }.padding(.top, 24)
-                Text(t(ar, "يعمل على جهازك، ولا يجمع أي بيانات", "Runs on your phone and collects no data"))
+                Text(t(ar, "لشبكة بيتك أو شبكة أنت مسؤول عنها، ويعمل على جهازك ولا يجمع أي بيانات", "For your home network or one you are responsible for. Runs on your phone and collects no data"))
                     .font(Theme.font(12.5)).foregroundStyle(Theme.ink3).padding(.top, 10)
                 if coord.state == .noNetwork { NoNetwork(ar: ar).padding(.top, 16) }
                 if coord.lastScan != nil { LastScanCard(ar: ar).padding(.top, 18) }

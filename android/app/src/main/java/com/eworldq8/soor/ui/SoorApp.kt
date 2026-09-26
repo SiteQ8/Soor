@@ -95,6 +95,7 @@ import com.eworldq8.soor.engine.SoorReport
 import com.eworldq8.soor.scan.DeviceInfo
 import com.eworldq8.soor.scan.DeviceKind
 import com.eworldq8.soor.scan.DeviceKinds
+import com.eworldq8.soor.scan.Gate
 import com.eworldq8.soor.scan.LocalNet
 import com.eworldq8.soor.scan.NetCheck
 import com.eworldq8.soor.scan.Phase
@@ -168,6 +169,9 @@ fun SoorApp(vm: ScanViewModel) {
     SoorScreen(
         ui = ui, lang = lang, knowledge = vm.knowledge,
         onScan = { vm.start() },
+        onConsent = { vm.consent(); vm.start() },
+        onScanAnyway = { vm.start(force = true) },
+        onCloseGate = { vm.closeGate() },
         onToggleLang = { vm.switchLang(context) },
         onShare = {
             val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, vm.reportText()) }
@@ -189,6 +193,7 @@ fun SoorScreen(
     onForget: () -> Unit, onOpen: (String) -> Unit, initialSheet: Sheet? = null,
     onStop: () -> Unit = {}, onHome: () -> Unit = {}, onResults: () -> Unit = {},
     onLabel: (String, String) -> Unit = { _, _ -> },
+    onConsent: () -> Unit = {}, onScanAnyway: () -> Unit = {}, onCloseGate: () -> Unit = {},
 ) {
     val ar = lang == Lang.AR
     var sheet by remember { mutableStateOf(initialSheet) }
@@ -219,8 +224,76 @@ fun SoorScreen(
                 onFinding = { sheet = Sheet.OfFinding(it) }, onOpen = onOpen, onLabel = onLabel) { sheet = null }
             null -> {}
         }
+        when (ui.gate) {
+            Gate.CONSENT -> ConsentSheet(ar, onConsent, onCloseGate)
+            Gate.PUBLIC -> PublicSheet(ar, ui.publicSigns, onScanAnyway, onCloseGate)
+            null -> {}
+        }
     }
 }
+
+// ---- the gate before a scan ----
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConsentSheet(ar: Boolean, onConsent: () -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Theme.panel, dragHandle = { BottomSheetDefaults.DragHandle(color = Theme.rule) }) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(bottom = 30.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(13.dp)).background(Theme.navy.copy(alpha = 0.28f)), contentAlignment = Alignment.Center) {
+                    DeviceGlyph(DeviceKind.ROUTER, Theme.signal, Modifier.size(28.dp))
+                }
+                H(14)
+                Text(t(ar, "افحص شبكتك أنت", "Scan your own network"), color = Theme.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            V(16)
+            Text(t(ar, "سُور لشبكة بيتك أو لشبكة أنت مسؤول عنها، وفحص شبكة لا تملكها، كشبكة مقهى أو مطار أو مكان عمل، قد يخالف القانون وهو خلاف الغرض من هذا التطبيق، وبضغطك تؤكد أن الشبكة التي تفحصها شبكتك.",
+                      "Soor is for your home network, or a network you are responsible for. Scanning a network you do not own, such as a café, airport or workplace, may be against the law and is not what this app is for. By continuing you confirm the network you scan is yours."),
+                color = Theme.ink2, fontSize = 15.sp, lineHeight = 25.sp)
+            V(22)
+            PrimaryButton(t(ar, "أفهم، هذه شبكتي", "I understand, this is my network"), onConsent)
+            V(10)
+            Text(t(ar, "يظهر هذا مرة واحدة، ويعود إن مسحت ذاكرة سُور من «عن سُور».", "Shown once. It returns if you erase Soor's memory from About."), color = Theme.ink3, fontSize = 12.5.sp, lineHeight = 19.sp)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PublicSheet(ar: Boolean, signs: List<String>, onScanAnyway: () -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Theme.panel, dragHandle = { BottomSheetDefaults.DragHandle(color = Theme.rule) }) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(bottom = 30.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.Warning, null, tint = Theme.high, modifier = Modifier.size(28.dp))
+                H(12)
+                Text(t(ar, "هذه الشبكة تبدو عامة", "This network looks public"), color = Theme.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            V(14)
+            signs.forEach { sign ->
+                Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(8.dp).clip(CircleShape).background(Theme.high))
+                    H(10)
+                    Text(when (sign) {
+                        "captive" -> t(ar, "فيها صفحة دخول، كالتي في المقاهي والفنادق والمطارات", "It has a sign-in page, like cafés, hotels and airports")
+                        "open" -> t(ar, "الواي فاي فيها بلا تشفير", "Its Wi-Fi is not encrypted")
+                        else -> sign
+                    }, color = Theme.ink, fontSize = 14.5.sp)
+                }
+            }
+            V(10)
+            Text(t(ar, "سُور لشبكة بيتك أو شبكة أنت مسؤول عنها، وفحص شبكة عامة قد يخالف القانون.",
+                      "Soor is for your home network or a network you are responsible for, and scanning a public network may be against the law."),
+                color = Theme.ink2, fontSize = 15.sp, lineHeight = 25.sp)
+            V(22)
+            PrimaryButton(t(ar, "ألغِ", "Cancel"), onDismiss)
+            V(10)
+            SecondaryButton(t(ar, "أنا مسؤول عنها، افحص", "I am responsible for it, scan"), null, onScanAnyway, Modifier.fillMaxWidth())
+        }
+    }
+}
+
 
 @Composable private fun V(h: Int) = Spacer(Modifier.height(h.dp))
 @Composable private fun H(w: Int) = Spacer(Modifier.width(w.dp))
@@ -327,7 +400,8 @@ private fun Home(ui: ScanUiState, ar: Boolean, onScan: () -> Unit, onResults: ()
         V(24)
         PrimaryButton(t(ar, "افحص شبكتي", "Scan my network"), onScan)
         V(10)
-        Text(t(ar, "يعمل على جهازك، ولا يجمع أي بيانات", "Runs on your phone and collects no data"), color = Theme.ink3, fontSize = 12.5.sp)
+        Text(t(ar, "لشبكة بيتك أو شبكة أنت مسؤول عنها، ويعمل على جهازك ولا يجمع أي بيانات", "For your home network or one you are responsible for. Runs on your phone and collects no data"),
+            color = Theme.ink3, fontSize = 12.5.sp, textAlign = TextAlign.Center, lineHeight = 19.sp)
         if (ui.state == ScanState.NO_NETWORK) { V(16); NoNetwork(ar) }
         if (ui.lastScan != null) { V(18); LastScanCard(ui, ar, onResults) }
         V(26)

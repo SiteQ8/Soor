@@ -16,3 +16,5 @@ It collects nothing
 Soor runs entirely inside your phone. No account, no server, no data collection, and it only connects to addresses inside your home network. It asks for the internet permission because Android requires it for any network connection, even inside the home. Soor is open source, so anyone can verify all of this.
 
 Arabic and English, free, with no ads and no subscription.
+
+Soor is for your home network, or a network you are responsible for. Scanning a network you do not own, such as a café, airport or workplace, may be against the law and is not what the app is for.

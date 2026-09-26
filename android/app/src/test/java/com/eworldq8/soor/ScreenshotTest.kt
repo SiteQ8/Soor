@@ -10,6 +10,7 @@ import com.eworldq8.soor.engine.Observation
 import com.eworldq8.soor.engine.SoorEngine
 import com.eworldq8.soor.scan.DeviceInfo
 import com.eworldq8.soor.scan.DeviceKind
+import com.eworldq8.soor.scan.Gate
 import com.eworldq8.soor.scan.LocalNet
 import com.eworldq8.soor.scan.NetCheck
 import com.eworldq8.soor.engine.Severity
@@ -119,6 +120,9 @@ class ScreenshotTest {
     }
 
     @Test fun home_ar() = shot("ar-1-home", ScanUiState())
+    @Test fun consent_ar() = shot("ar-10-consent", ScanUiState(gate = Gate.CONSENT))
+    @Test fun public_ar() = shot("ar-11-public", ScanUiState(gate = Gate.PUBLIC, publicSigns = listOf("captive", "open")))
+    @Test fun consent_en() = shot("en-10-consent", ScanUiState(gate = Gate.CONSENT), Lang.EN)
     @Test fun home_last_ar() = shot("ar-8-home-last", results.copy(state = ScanState.IDLE))
     @Test fun network_ar() = shot("ar-9-network", results, scrollTo = 3 + findings.size)
     @Test fun scanning_ar() = shot("ar-2-scanning", scanning)
