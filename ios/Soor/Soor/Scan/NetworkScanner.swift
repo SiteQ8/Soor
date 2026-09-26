@@ -1,300 +1,594 @@
 import Foundation
 import Network
+import Security
 
-// The real scanner. It runs entirely on the device and only ever touches the
-// local network the phone is on. It does three honest things:
-//   1. Finds the phone's own IPv4 address and subnet, then sweeps that /24 for
-//      hosts that answer a TCP connection on any common port.
-//   2. For each live host, probes a set of common service ports and reads the
-//      banner the service volunteers (HTTP Server header and title, RTSP line,
-//      raw TCP banner). It never sends a password and never tries a login.
-//   3. Asks the router for its UPnP IGD port-forward list, so a device forwarded
-//      to the internet can be told apart from a safe local one.
-// It exploits nothing. It knocks on doors and reads what is announced.
+// The scan itself, on the phone and on the home network only. It finds the
+// devices, knocks on their common ports, and reads what each service announces
+// about itself. It never sends a password and never tries a login.
+//
+// The same rules as the Android app: a refusal proves a device is present, a
+// web page answering 200 is never called "no password", and a certificate is
+// called self-signed only when the handshake actually fails to verify.
+
+struct LocalNet {
+    let ip: String
+    let prefix: String
+    var gateway: String?
+}
+
+struct HostScan {
+    let ip: String
+    let openPorts: [Int]
+    let observations: [Observation]
+}
 
 struct ScanProgress {
-    var phase: String
-    var scanned: Int
-    var total: Int
-    var found: Int
+    let phase: String
+    let done: Int
+    let total: Int
+    let portsChecked: Int
+}
+
+/// Only addresses inside the home network are ever contacted, the same rule the
+/// Android app enforces before every connection.
+enum LocalOnly {
+    static let ssdpGroup = "239.255.255.250"
+
+    static func isAllowed(_ host: String) -> Bool {
+        if host == ssdpGroup { return true }
+        let p = host.split(separator: ".").compactMap { Int($0) }
+        guard p.count == 4, p.allSatisfy({ (0...255).contains($0) }) else { return false }
+        if p[0] == 10 { return true }
+        if p[0] == 172, (16...31).contains(p[1]) { return true }
+        if p[0] == 192, p[1] == 168 { return true }
+        if p[0] == 169, p[1] == 254 { return true }
+        return false
+    }
+}
+
+/// Runs closures with at most `limit` in flight; each closure calls done() when finished.
+final class Gate {
+    private let q = DispatchQueue(label: "soor.gate")
+    private let limit: Int
+    private var running = 0
+    private var pending: [(@escaping () -> Void) -> Void] = []
+
+    init(_ limit: Int) { self.limit = limit }
+
+    func run(_ body: @escaping (@escaping () -> Void) -> Void) {
+        q.async {
+            if self.running < self.limit {
+                self.running += 1
+                body { self.finish() }
+            } else {
+                self.pending.append(body)
+            }
+        }
+    }
+
+    private func finish() {
+        q.async {
+            self.running -= 1
+            if self.running < self.limit, !self.pending.isEmpty {
+                let next = self.pending.removeFirst()
+                self.running += 1
+                next { self.finish() }
+            }
+        }
+    }
 }
 
 final class NetworkScanner {
 
-    // Ports worth probing on a home network, chosen to line up with the
-    // knowledge base. Kept small so a sweep stays quick and polite.
-    static let commonPorts: [Int] = [21, 22, 23, 80, 81, 443, 139, 445, 554, 1900,
-                                     2020, 2323, 3389, 5555, 8000, 8080, 8081, 8443,
-                                     8554, 8899, 9000, 34567]
+    enum Knock { case open, closed, silent }
 
-    // A quick liveness set: if a host answers any of these, it is up.
-    static let livenessPorts: [Int] = [80, 443, 8080, 554, 22, 445, 5555]
+    // the ports the knowledge base judges, plus a few that only tell what a device is
+    static let commonPorts: [Int] = [21, 22, 23, 80, 81, 443, 139, 445, 548, 554, 631, 1900, 2020, 2323, 3389, 5555,
+                                     7000, 8000, 8008, 8009, 8080, 8081, 8443, 8554, 8899, 9000, 9100, 34567, 62078]
+    // a device is present if it answers on any of these, even to refuse
+    static let livenessPorts: [Int] = [80, 443, 22, 445, 62078, 8080, 554, 5555, 8008, 9100, 7000, 139]
+    private static let httpPorts: Set<Int> = [80, 81, 8080, 8081, 8000]
+    private static let tlsPorts: Set<Int> = [443, 8443]
+    private static let rtspPorts: Set<Int> = [554, 8554]
 
     private let queue = DispatchQueue(label: "soor.scan", attributes: .concurrent)
-    private let connectTimeout: TimeInterval = 1.2
-    private let bannerTimeout: TimeInterval = 1.5
+    private let counter = DispatchQueue(label: "soor.count")
+    private var portsChecked = 0
+    private(set) var cancelled = false
 
     var onProgress: ((ScanProgress) -> Void)?
+    var onHostFound: ((String) -> Void)?
+    var onProbing: ((String) -> Void)?
 
-    // MARK: - Public entry
+    /// Stopping is cooperative: the flag is checked before every knock, so a stop lands within a second.
+    func cancel() { cancelled = true }
 
-    /// Runs a full scan and returns the observations for the engine.
-    func scan(exposedPorts: Set<Int>, completion: @escaping ([Observation]) -> Void) {
-        guard let (localIP, prefix) = Self.localIPv4AndPrefix() else {
-            completion([]); return
-        }
-        report("discovering", 0, 254, 0)
-
-        discoverHosts(prefix: prefix, selfIP: localIP) { [weak self] hosts in
-            guard let self = self else { return }
-            var all: [Observation] = []
+    func scan(net: LocalNet, seeds: [String], exposed: Set<String>, completion: @escaping ([HostScan]) -> Void) {
+        discoverHosts(net: net, seeds: seeds) { hosts in
+            let gate = Gate(16)
             let group = DispatchGroup()
+            var results: [HostScan] = []
             var done = 0
-            let lock = NSLock()
-
-            for host in hosts {
+            for ip in hosts {
                 group.enter()
-                self.probeHost(host, exposedPorts: exposedPorts) { obs in
-                    lock.lock()
-                    all.append(contentsOf: obs)
-                    done += 1
-                    self.report("probing", done, hosts.count, hosts.count)
-                    lock.unlock()
-                    group.leave()
+                gate.run { finish in
+                    if self.cancelled { finish(); group.leave(); return }
+                    self.onProbing?(ip)
+                    self.probeHost(ip, exposed: exposed) { h in
+                        self.counter.async {
+                            results.append(h)
+                            done += 1
+                            self.onProgress?(ScanProgress(phase: "probing", done: done, total: hosts.count, portsChecked: self.portsChecked))
+                            finish()
+                            group.leave()
+                        }
+                    }
                 }
             }
-            group.notify(queue: .main) { completion(all) }
+            group.notify(queue: self.counter) {
+                completion(results.sorted { NetworkScanner.ipLess($0.ip, $1.ip) })
+            }
         }
     }
 
-    private func report(_ phase: String, _ scanned: Int, _ total: Int, _ found: Int) {
-        DispatchQueue.main.async {
-            self.onProgress?(ScanProgress(phase: phase, scanned: scanned, total: total, found: found))
+    private func discoverHosts(net: LocalNet, seeds: [String], completion: @escaping ([String]) -> Void) {
+        let lock = DispatchQueue(label: "soor.live")
+        var live: [String] = []
+        func found(_ ip: String) {
+            var isNew = false
+            lock.sync {
+                if ip != net.ip && !live.contains(ip) { live.append(ip); isNew = true }
+            }
+            if isNew { onHostFound?(ip) }
         }
-    }
+        seeds.filter { $0.hasPrefix(net.prefix + ".") }.forEach { found($0) }
 
-    // MARK: - Host discovery
-
-    private func discoverHosts(prefix: String, selfIP: String,
-                               completion: @escaping ([String]) -> Void) {
-        var live: [String] = [selfIP]   // the phone itself is on the network
-        let lock = NSLock()
+        let gate = Gate(40)
         let group = DispatchGroup()
         var checked = 0
-
-        for i in 1...254 {
-            let ip = "\(prefix).\(i)"
-            group.enter()
-            isHostUp(ip) { up in
-                lock.lock()
+        let advance: (@escaping () -> Void) -> Void = { finish in
+            self.counter.async {
                 checked += 1
-                if up && ip != selfIP { live.append(ip) }
-                self.report("discovering", checked, 254, live.count)
-                lock.unlock()
+                self.onProgress?(ScanProgress(phase: "discovering", done: checked, total: 254, portsChecked: self.portsChecked))
+                finish()
                 group.leave()
             }
         }
-        group.notify(queue: self.queue) {
-            completion(Array(Set(live)).sorted(by: Self.ipLess))
+        for i in 1...254 {
+            let ip = "\(net.prefix).\(i)"
+            group.enter()
+            gate.run { finish in
+                let already = lock.sync { live.contains(ip) }
+                if self.cancelled || ip == net.ip || already { advance(finish); return }
+                self.isHostUp(ip) { up in
+                    if up { found(ip) }
+                    advance(finish)
+                }
+            }
         }
+        group.notify(queue: counter) { completion(lock.sync { live }) }
     }
 
     private func isHostUp(_ ip: String, completion: @escaping (Bool) -> Void) {
-        let group = DispatchGroup()
-        var up = false
-        let lock = NSLock()
-        for port in Self.livenessPorts {
-            group.enter()
-            tryConnect(ip: ip, port: port, timeout: 0.8) { ok in
-                if ok { lock.lock(); up = true; lock.unlock() }
-                group.leave()
+        func step(_ i: Int) {
+            if i >= NetworkScanner.livenessPorts.count || cancelled { completion(false); return }
+            knock(ip, NetworkScanner.livenessPorts[i], timeout: 0.4) { k in
+                if k == .silent { step(i + 1) } else { completion(true) }
             }
         }
-        group.notify(queue: queue) { completion(up) }
+        step(0)
     }
 
-    // MARK: - Port probing
-
-    private func probeHost(_ ip: String, exposedPorts: Set<Int>,
-                           completion: @escaping ([Observation]) -> Void) {
-        var obs: [Observation] = []
-        let lock = NSLock()
-        let group = DispatchGroup()
-
-        for port in Self.commonPorts {
-            group.enter()
-            tryConnect(ip: ip, port: port, timeout: connectTimeout) { [weak self] open in
-                guard let self = self, open else { group.leave(); return }
-                self.readBanner(ip: ip, port: port) { banner, noAuth in
-                    var o = Observation(host: ip, port: port)
-                    o.internetExposed = exposedPorts.contains(port)
-                    o.noAuth = noAuth
-                    self.assignBanner(&o, port: port, banner: banner)
-                    lock.lock(); obs.append(o); lock.unlock()
-                    group.leave()
-                }
-            }
-        }
-        group.notify(queue: queue) { completion(obs) }
+    private static func isRefused(_ e: NWError) -> Bool {
+        if case .posix(let code) = e { return code == .ECONNREFUSED }
+        return false
     }
 
-    // Route the banner into the field the engine expects for that port.
-    private func assignBanner(_ o: inout Observation, port: Int, banner: String) {
-        guard !banner.isEmpty else { return }
-        if port == 554 || port == 8554 {
-            o.rtspServer = extractHeader(banner, "Server") ?? banner
-        } else if [80, 81, 443, 8080, 8081, 8443, 8000].contains(port) {
-            o.httpServer = extractHeader(banner, "Server")
-            o.httpTitle = extractTitle(banner)
-            if banner.lowercased().contains("self-signed") { o.banner = "self-signed certificate" }
-            o.raw = banner
-        } else {
-            o.banner = banner
-        }
-    }
-
-    // MARK: - TCP connect
-
-    private func tryConnect(ip: String, port: Int, timeout: TimeInterval,
-                            completion: @escaping (Bool) -> Void) {
-        guard let nwPort = NWEndpoint.Port(rawValue: UInt16(port)) else { completion(false); return }
-        let host = NWEndpoint.Host(ip)
-        let params = NWParameters.tcp
-        params.prohibitedInterfaceTypes = [.cellular]   // local network only
-        let conn = NWConnection(host: host, port: nwPort, using: params)
+    private func knock(_ ip: String, _ port: Int, timeout: TimeInterval, completion: @escaping (Knock) -> Void) {
+        counter.async { self.portsChecked += 1 }
+        guard LocalOnly.isAllowed(ip), let p = NWEndpoint.Port(rawValue: UInt16(port)) else { completion(.silent); return }
+        let conn = NWConnection(host: NWEndpoint.Host(ip), port: p, using: .tcp)
         var finished = false
-        let finish: (Bool) -> Void = { ok in
-            if finished { return }
-            finished = true
-            conn.cancel()
-            completion(ok)
+        let finish: (Knock) -> Void = { k in
+            self.counter.async {
+                if finished { return }
+                finished = true
+                conn.cancel()
+                completion(k)
+            }
         }
         conn.stateUpdateHandler = { state in
             switch state {
-            case .ready: finish(true)
-            case .failed, .cancelled: finish(false)
+            case .ready: finish(.open)
+            case .failed(let e): finish(NetworkScanner.isRefused(e) ? .closed : .silent)
+            case .waiting(let e): finish(NetworkScanner.isRefused(e) ? .closed : .silent)
             default: break
             }
         }
         conn.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + timeout) { finish(false) }
+        queue.asyncAfter(deadline: .now() + timeout) { finish(.silent) }
     }
 
-    // MARK: - Banner read
+    private func probeHost(_ ip: String, exposed: Set<String>, completion: @escaping (HostScan) -> Void) {
+        var open: [Int] = []
+        var obs: [Observation] = []
+        func step(_ i: Int) {
+            if i >= NetworkScanner.commonPorts.count || cancelled {
+                completion(HostScan(ip: ip, openPorts: open, observations: obs)); return
+            }
+            let port = NetworkScanner.commonPorts[i]
+            knock(ip, port, timeout: 0.9) { k in
+                guard k == .open else { step(i + 1); return }
+                open.append(port)
+                let after: (String) -> Void = { banner in
+                    obs.append(self.buildObservation(ip: ip, port: port, banner: banner, exposed: exposed.contains("\(ip):\(port)")))
+                    step(i + 1)
+                }
+                if NetworkScanner.tlsPorts.contains(port) {
+                    self.tlsUntrusted(ip, port) { r in
+                        if let r = r { after(r ? "self-signed certificate" : "trusted certificate") } else { after("") }
+                    }
+                } else {
+                    self.readBanner(ip, port, after)
+                }
+            }
+        }
+        step(0)
+    }
 
-    private func readBanner(ip: String, port: Int,
-                            completion: @escaping (String, Bool) -> Void) {
-        guard let nwPort = NWEndpoint.Port(rawValue: UInt16(port)) else { completion("", false); return }
-        let params: NWParameters
-        if port == 443 || port == 8443 {
-            params = NWParameters.tls   // let the stack complete the handshake
+    private func buildObservation(ip: String, port: Int, banner: String, exposed: Bool) -> Observation {
+        var o = Observation(host: ip, port: port)
+        o.internetExposed = exposed
+        o.noAuth = NetworkScanner.looksUnauthenticated(banner, port: port)
+        if NetworkScanner.rtspPorts.contains(port) {
+            o.rtspServer = header(banner, "Server") ?? (banner.isEmpty ? nil : String(banner.prefix(200)))
+        } else if NetworkScanner.httpPorts.contains(port) {
+            o.httpServer = header(banner, "Server")
+            o.httpTitle = title(banner)
+            o.raw = banner.isEmpty ? nil : String(banner.prefix(400))
         } else {
-            params = NWParameters.tcp
+            o.banner = banner.isEmpty ? nil : String(banner.prefix(200))
         }
-        params.prohibitedInterfaceTypes = [.cellular]
-        let conn = NWConnection(host: NWEndpoint.Host(ip), port: nwPort, using: params)
-        var finished = false
-        let finish: (String, Bool) -> Void = { banner, noAuth in
-            if finished { return }
-            finished = true
-            conn.cancel()
-            completion(banner, noAuth)
-        }
+        return o
+    }
 
+    /// Reads what the service volunteers: a bare GET for a web port, a DESCRIBE for
+    /// a stream port, which a camera answers with the stream itself when it asks
+    /// for no password. No credentials are ever sent.
+    private func readBanner(_ ip: String, _ port: Int, _ completion: @escaping (String) -> Void) {
+        guard LocalOnly.isAllowed(ip), let p = NWEndpoint.Port(rawValue: UInt16(port)) else { completion(""); return }
+        let conn = NWConnection(host: NWEndpoint.Host(ip), port: p, using: .tcp)
+        var finished = false
+        let finish: (String) -> Void = { text in
+            self.counter.async {
+                if finished { return }
+                finished = true
+                conn.cancel()
+                completion(text)
+            }
+        }
         conn.stateUpdateHandler = { state in
             switch state {
             case .ready:
-                // For HTTP-ish ports, send a bare request so the server replies.
-                let httpPorts: Set<Int> = [80, 81, 8080, 8081, 8000, 443, 8443]
-                if httpPorts.contains(port) {
-                    let req = "GET / HTTP/1.0\r\nHost: \(ip)\r\nUser-Agent: Soor\r\n\r\n"
-                    conn.send(content: req.data(using: .utf8), completion: .contentProcessed { _ in })
-                } else if port == 554 || port == 8554 {
-                    let req = "OPTIONS rtsp://\(ip) RTSP/1.0\r\nCSeq: 1\r\n\r\n"
-                    conn.send(content: req.data(using: .utf8), completion: .contentProcessed { _ in })
+                var request: String? = nil
+                if NetworkScanner.httpPorts.contains(port) {
+                    request = "GET / HTTP/1.0\r\nHost: \(ip)\r\nUser-Agent: Soor\r\n\r\n"
+                } else if NetworkScanner.rtspPorts.contains(port) {
+                    request = "DESCRIBE rtsp://\(ip):\(port)/ RTSP/1.0\r\nCSeq: 2\r\nAccept: application/sdp\r\nUser-Agent: Soor\r\n\r\n"
+                }
+                if let r = request, let data = r.data(using: .utf8) {
+                    conn.send(content: data, completion: .contentProcessed { _ in })
                 }
                 conn.receive(minimumIncompleteLength: 1, maximumLength: 4096) { data, _, _, _ in
-                    let text = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-                    let noAuth = Self.looksUnauthenticated(text, port: port)
-                    finish(text, noAuth)
+                    finish(data.flatMap { String(data: $0, encoding: .isoLatin1) } ?? "")
                 }
-            case .failed, .cancelled:
-                finish("", false)
+            case .failed, .waiting:
+                finish("")
+            default:
+                break
+            }
+        }
+        conn.start(queue: queue)
+        queue.asyncAfter(deadline: .now() + 2.0) { finish("") }
+    }
+
+    /// Whether a TLS service's certificate fails to verify against the phone's own
+    /// trust store, read from the handshake. Nothing is sent after it.
+    /// true: no trusted authority vouches for it, almost always self-signed.
+    /// nil: the handshake failed for another reason, so nothing is claimed.
+    private func tlsUntrusted(_ ip: String, _ port: Int, _ completion: @escaping (Bool?) -> Void) {
+        guard LocalOnly.isAllowed(ip), let p = NWEndpoint.Port(rawValue: UInt16(port)) else { completion(nil); return }
+        let tls = NWProtocolTLS.Options()
+        var untrusted: Bool? = nil
+        sec_protocol_options_set_verify_block(tls.securityProtocolOptions, { _, trust, complete in
+            let t = sec_trust_copy_ref(trust).takeRetainedValue()
+            var error: CFError?
+            let ok = SecTrustEvaluateWithError(t, &error)
+            untrusted = !ok
+            complete(ok)
+        }, queue)
+        let conn = NWConnection(host: NWEndpoint.Host(ip), port: p, using: NWParameters(tls: tls, tcp: NWProtocolTCP.Options()))
+        var finished = false
+        let finish: () -> Void = {
+            self.counter.async {
+                if finished { return }
+                finished = true
+                conn.cancel()
+                completion(untrusted)
+            }
+        }
+        conn.stateUpdateHandler = { state in
+            switch state {
+            case .ready, .failed, .waiting: finish()
             default: break
             }
         }
         conn.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + bannerTimeout) { finish("", false) }
+        queue.asyncAfter(deadline: .now() + 2.5) { finish() }
     }
 
-    // A service "answers with no password" when it returns content without a 401
-    // and without a WWW-Authenticate challenge, or an RTSP stream that does not
-    // demand authentication. This is read from the reply, never from a login try.
+    /// Only a stream that hands over its description to an anonymous DESCRIBE is
+    /// called open. A web page answering 200 proves nothing, since most admin
+    /// panels answer 200 with a login form.
     private static func looksUnauthenticated(_ text: String, port: Int) -> Bool {
+        guard !text.isEmpty, rtspPorts.contains(port) else { return false }
         let t = text.lowercased()
-        if t.isEmpty { return false }
-        if port == 554 || port == 8554 {
-            return t.contains("rtsp/1.0 200") && !t.contains("www-authenticate")
-        }
-        if t.hasPrefix("http/") {
-            let unauthorized = t.contains(" 401") || t.contains("www-authenticate")
-            let ok = t.contains(" 200") || t.contains(" 302") || t.contains(" 301")
-            return ok && !unauthorized
-        }
-        // Raw banners such as ADB/telnet: content with no obvious auth prompt.
-        return !t.contains("password") && (port == 5555 || port == 445)
+        return t.hasPrefix("rtsp/1.0 200") && (t.contains("application/sdp") || t.contains("\nv=0"))
     }
 
-    // MARK: - Header parsing
-
-    private func extractHeader(_ text: String, _ name: String) -> String? {
+    private func header(_ text: String, _ name: String) -> String? {
         for line in text.split(separator: "\n") {
-            let l = line.trimmingCharacters(in: .whitespaces)
+            let l = line.trimmingCharacters(in: .whitespacesAndNewlines)
             if l.lowercased().hasPrefix(name.lowercased() + ":") {
-                return String(l.dropFirst(name.count + 1)).trimmingCharacters(in: .whitespaces)
+                let v = l.dropFirst(name.count + 1).trimmingCharacters(in: .whitespaces)
+                return v.isEmpty ? nil : String(v)
             }
         }
         return nil
     }
 
-    private func extractTitle(_ text: String) -> String? {
-        guard let r = text.range(of: "<title>", options: .caseInsensitive),
-              let e = text.range(of: "</title>", options: .caseInsensitive, range: r.upperBound..<text.endIndex)
-        else { return nil }
-        return String(text[r.upperBound..<e.lowerBound]).trimmingCharacters(in: .whitespaces)
+    private func title(_ text: String) -> String? {
+        let lower = text.lowercased()
+        guard let a = lower.range(of: "<title>"), let b = lower.range(of: "</title>", range: a.upperBound..<lower.endIndex) else { return nil }
+        let t = text[a.upperBound..<b.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? nil : t
     }
 
-    // MARK: - Local address
-
-    static func localIPv4AndPrefix() -> (ip: String, prefix: String)? {
-        var address: String?
-        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+    /// The phone's own address and /24 on Wi-Fi, or nil when not on one.
+    static func localNet() -> LocalNet? {
+        var ifaddr: UnsafeMutablePointer<ifaddrs>? = nil
         guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
         defer { freeifaddrs(ifaddr) }
         var ptr: UnsafeMutablePointer<ifaddrs>? = first
         while let p = ptr {
             let flags = Int32(p.pointee.ifa_flags)
-            let addr = p.pointee.ifa_addr.pointee
-            if (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING),
-               addr.sa_family == UInt8(AF_INET) {
+            if let sa = p.pointee.ifa_addr, sa.pointee.sa_family == UInt8(AF_INET),
+               (flags & IFF_UP) != 0, (flags & IFF_LOOPBACK) == 0 {
                 let name = String(cString: p.pointee.ifa_name)
-                if name == "en0" || name.hasPrefix("en") {
+                if name == "en0" {
+                    var addr = sa.pointee
                     var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    getnameinfo(p.pointee.ifa_addr, socklen_t(p.pointee.ifa_addr.pointee.sa_len),
-                                &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST)
-                    address = String(cString: host)
+                    if getnameinfo(&addr, socklen_t(sa.pointee.sa_len), &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST) == 0 {
+                        let ip = String(cString: host)
+                        let parts = ip.split(separator: ".")
+                        if parts.count == 4, LocalOnly.isAllowed(ip) {
+                            return LocalNet(ip: ip, prefix: parts[0...2].joined(separator: "."), gateway: nil)
+                        }
+                    }
                 }
             }
             ptr = p.pointee.ifa_next
         }
-        guard let ip = address else { return nil }
-        let parts = ip.split(separator: ".")
-        guard parts.count == 4 else { return nil }
-        return (ip, "\(parts[0]).\(parts[1]).\(parts[2])")
+        return nil
     }
 
     static func ipLess(_ a: String, _ b: String) -> Bool {
         func n(_ s: String) -> Int { Int(s.split(separator: ".").last ?? "0") ?? 0 }
         return n(a) < n(b)
+    }
+}
+
+// MARK: - What a device is
+
+enum DeviceKind: String { case router, camera, tv, nas, computer, phone, printer, iot, unknown }
+
+/// A best guess at what a device is, from its ports and the names it gives
+/// itself. Only a guess, so it never changes a verdict: it picks the picture and the label.
+enum DeviceKinds {
+    private static let cameraPorts: Set<Int> = [554, 8554, 34567, 37777, 2020, 8899]
+
+    static func guess(ports: Set<Int>, isGateway: Bool, cameraVendor: Bool, hint: String) -> DeviceKind {
+        let text = hint.lowercased()
+        func has(_ words: String...) -> Bool { words.contains { text.contains($0) } }
+        if isGateway || has("internetgatewaydevice", "router") { return .router }
+        if has("_companion-link", "_rdlink") && !has("macbook", "imac", "mac mini") { return .phone }
+        if has("_airplay", "_raop", "_googlecast", "apple tv") { return .tv }
+        if has("_ipp", "_printer") { return .printer }
+        if has("_smb", "_ssh", "_workstation", "macbook", "imac", "desktop-", "laptop") { return .computer }
+        if has("_hap", "_sonos", "_spotify") { return .iot }
+        if cameraVendor || !ports.isDisjoint(with: cameraPorts) || has("camera", "ipcam", "nvr", "dvr") { return .camera }
+        if !ports.isDisjoint(with: [9100, 631, 515]) || has("printer", "laserjet", "deskjet") { return .printer }
+        if !ports.isDisjoint(with: [8008, 8009, 7000, 5555]) || has("mediarenderer", "chromecast", "roku", " tv") { return .tv }
+        if ports.contains(548) || has("synology", "diskstation", "qnap", " nas") { return .nas }
+        if ports.contains(62078) { return .phone }
+        if !ports.isDisjoint(with: [22, 3389, 445, 139]) { return .computer }
+        return .unknown
+    }
+
+    static func label(_ kind: DeviceKind, _ ar: Bool) -> String {
+        switch kind {
+        case .router: return ar ? "الراوتر" : "Router"
+        case .camera: return ar ? "كاميرا" : "Camera"
+        case .tv: return ar ? "تلفاز أو جهاز بث" : "TV or streaming box"
+        case .nas: return ar ? "جهاز تخزين" : "Storage"
+        case .computer: return ar ? "حاسوب" : "Computer"
+        case .phone: return ar ? "هاتف أو جهاز لوحي" : "Phone or tablet"
+        case .printer: return ar ? "طابعة" : "Printer"
+        case .iot: return ar ? "جهاز منزلي ذكي" : "Smart home device"
+        case .unknown: return ar ? "جهاز" : "Device"
+        }
+    }
+}
+
+// MARK: - What the phone remembers, on the phone only
+
+/// The devices Soor has seen on each network and the findings of the last scan,
+/// so it can say what is new and what changed. Kept in the app's own defaults,
+/// never sent anywhere, and erased from About.
+enum KnownDevices {
+    private static var defaults: UserDefaults { .standard }
+
+    static func networkKey(_ net: LocalNet) -> String { "net:" + (net.gateway ?? net.prefix) }
+
+    static func seen(_ network: String) -> Set<String>? {
+        (defaults.array(forKey: "devices." + network) as? [String]).map { Set($0) }
+    }
+
+    static func remember(_ network: String, _ ids: Set<String>) {
+        defaults.set(Array((seen(network) ?? []).union(ids)), forKey: "devices." + network)
+    }
+
+    static func lastFindings(_ network: String) -> Set<String>? {
+        (defaults.array(forKey: "findings." + network) as? [String]).map { Set($0) }
+    }
+
+    static func rememberFindings(_ network: String, _ sigs: Set<String>) {
+        defaults.set(Array(sigs), forKey: "findings." + network)
+    }
+
+    static func signature(_ f: Finding) -> String { "\(f.kind)|\(f.host)|\(f.port)" }
+
+    static func forget() {
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("devices.") || key.hasPrefix("findings.") {
+            defaults.removeObject(forKey: key)
+        }
+    }
+}
+
+// MARK: - The names devices give themselves
+
+/// Bonjour names, which Apple devices, printers, TVs and speakers announce.
+/// Browsing is what iOS allows without special entitlement, and each type
+/// browsed is declared in Info.plist. Must be used from the main thread.
+final class Bonjour: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
+    static let types = ["_companion-link._tcp.", "_rdlink._tcp.", "_airplay._tcp.", "_raop._tcp.", "_googlecast._tcp.",
+                        "_smb._tcp.", "_ssh._tcp.", "_workstation._tcp.", "_ipp._tcp.", "_printer._tcp.",
+                        "_http._tcp.", "_hap._tcp.", "_spotify-connect._tcp.", "_sonos._tcp."]
+
+    struct Found { let name: String; let service: String }
+
+    private var browsers: [NetServiceBrowser] = []
+    private var services: [NetService] = []
+    private(set) var found: [String: Found] = [:]
+
+    func start() {
+        for t in Bonjour.types {
+            let b = NetServiceBrowser()
+            b.delegate = self
+            b.searchForServices(ofType: t, inDomain: "local.")
+            browsers.append(b)
+        }
+    }
+
+    func stop() {
+        browsers.forEach { $0.stop() }
+        services.forEach { $0.stop() }
+        browsers = []
+    }
+
+    static func clean(_ raw: String) -> String {
+        var s = raw.replacingOccurrences(of: "\\032", with: " ").replacingOccurrences(of: "\\.", with: ".")
+        if let r = s.range(of: #"\s*\(\d+\)$"#, options: .regularExpression) { s.removeSubrange(r) }
+        return String(s.trimmingCharacters(in: .whitespaces).prefix(40))
+    }
+
+    func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        service.delegate = self
+        services.append(service)
+        service.resolve(withTimeout: 3)
+    }
+
+    func netServiceDidResolveAddress(_ sender: NetService) {
+        var fn: String? = nil
+        if let txt = sender.txtRecordData() {
+            let dict = NetService.dictionary(fromTXTRecord: txt)
+            if let d = dict["fn"] { fn = String(data: d, encoding: .utf8) }
+        }
+        let name = Bonjour.clean(fn ?? sender.name)
+        guard !name.isEmpty else { return }
+        for data in sender.addresses ?? [] {
+            let ip: String? = data.withUnsafeBytes { raw -> String? in
+                guard let base = raw.baseAddress, raw.count >= MemoryLayout<sockaddr_in>.size else { return nil }
+                let sa = base.assumingMemoryBound(to: sockaddr.self).pointee
+                guard sa.sa_family == UInt8(AF_INET) else { return nil }
+                var sin = base.assumingMemoryBound(to: sockaddr_in.self).pointee
+                var buf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+                guard inet_ntop(AF_INET, &sin.sin_addr, &buf, socklen_t(INET_ADDRSTRLEN)) != nil else { return nil }
+                return String(cString: buf)
+            }
+            if let ip = ip, LocalOnly.isAllowed(ip), found[ip] == nil {
+                found[ip] = Found(name: name, service: sender.type)
+            }
+        }
+    }
+}
+
+/// The computer name a Windows PC gives itself, asked on port 137 and told nothing.
+enum NetBIOS {
+    private static func query() -> Data {
+        var q = [UInt8](repeating: 0, count: 50)
+        q[0] = 0x13; q[1] = 0x37; q[5] = 1; q[12] = 0x20
+        q[13] = UInt8(ascii: "C"); q[14] = UInt8(ascii: "K")
+        for k in 15..<45 { q[k] = UInt8(ascii: "A") }
+        q[47] = 0x21; q[49] = 1
+        return Data(q)
+    }
+
+    static func name(of ip: String, queue: DispatchQueue, completion: @escaping (String?) -> Void) {
+        guard LocalOnly.isAllowed(ip), let port = NWEndpoint.Port(rawValue: 137) else { completion(nil); return }
+        let conn = NWConnection(host: NWEndpoint.Host(ip), port: port, using: .udp)
+        let lock = DispatchQueue(label: "soor.nb")
+        var finished = false
+        let finish: (String?) -> Void = { v in
+            lock.async {
+                if finished { return }
+                finished = true
+                conn.cancel()
+                completion(v)
+            }
+        }
+        conn.stateUpdateHandler = { state in
+            switch state {
+            case .ready:
+                conn.send(content: query(), completion: .contentProcessed { _ in })
+                conn.receiveMessage { data, _, _, _ in finish(data.flatMap(parse)) }
+            case .failed, .waiting: finish(nil)
+            default: break
+            }
+        }
+        conn.start(queue: queue)
+        queue.asyncAfter(deadline: .now() + 0.8) { finish(nil) }
+    }
+
+    private static func parse(_ d: Data) -> String? {
+        let b = [UInt8](d)
+        let n = b.count
+        var p = 12
+        guard n > p else { return nil }
+        p += (b[p] & 0xC0) == 0xC0 ? 2 : 34
+        p += 8
+        p += 2
+        guard p < n else { return nil }
+        let count = Int(b[p]); p += 1
+        for i in 0..<count {
+            let at = p + i * 18
+            guard at + 18 <= n else { break }
+            let suffix = b[at + 15]
+            let group = (b[at + 16] & 0x80) != 0
+            let raw = String(bytes: b[at..<(at + 15)], encoding: .isoLatin1) ?? ""
+            let name = raw.trimmingCharacters(in: .whitespaces)
+            if !group, suffix == 0, !name.isEmpty, name.unicodeScalars.allSatisfy({ (33...126).contains($0.value) }) { return name }
+        }
+        return nil
     }
 }

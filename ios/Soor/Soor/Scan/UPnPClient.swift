@@ -1,190 +1,176 @@
 import Foundation
 import Network
 
-// Reads the router's UPnP Internet Gateway Device port-forward table, so Soor can
-// tell a device forwarded to the internet from a safe local one. This is the
-// core of the camera-on-Shodan check: a camera is at risk when its port is in
-// this table. It is a read, using the router's own published UPnP service.
+// Reads the router's forwarded-port table, the core of the exposure check: a
+// device is visible from the internet when one of its ports is in this table.
 //
-// It works in two steps: SSDP multicast discovery to find the IGD control URL on
-// the local network, then SOAP calls to GetGenericPortMappingEntry to walk the
-// forwarded ports. Everything stays on the LAN.
+// iOS lets an app send to a multicast group only with an entitlement Apple
+// grants on request, so Soor asks the likely routers directly instead: a
+// unicast M-SEARCH to each candidate on port 1900, then the description paths
+// routers commonly serve. Every request stays inside the home network.
+
+struct PortMapping {
+    let externalPort: Int
+    let internalPort: Int
+    let internalClient: String
+    let proto: String
+}
+
+struct UPnPResult {
+    let upnpEnabled: Bool
+    let mappings: [PortMapping]
+    let gateway: String?
+
+    /// "ip:port" for every port the router forwards to the internet, tied to its own device
+    var exposed: Set<String> { Set(mappings.map { "\($0.internalClient):\($0.internalPort)" }) }
+}
 
 final class UPnPClient {
-
-    struct PortMapping {
-        let externalPort: Int
-        let internalPort: Int
-        let internalClient: String
-        let proto: String
-    }
-
     private let queue = DispatchQueue(label: "soor.upnp")
+    private static let serviceTypes = ["urn:schemas-upnp-org:service:WANIPConnection:1",
+                                       "urn:schemas-upnp-org:service:WANPPPConnection:1"]
+    private static let knownPaths: [(Int, String)] = [
+        (1900, "/igd.xml"), (1900, "/rootDesc.xml"), (1900, "/gatedesc.xml"), (5000, "/rootDesc.xml"),
+        (49152, "/rootDesc.xml"), (49153, "/rootDesc.xml"), (8200, "/rootDesc.xml"), (52869, "/gatedesc.xml"),
+        (80, "/description.xml"), (1780, "/InternetGatewayDevice.xml"), (37215, "/upnpdev.xml"),
+    ]
 
-    /// Returns the set of internal ports that the router has forwarded to the
-    /// internet. Empty when UPnP is off or unreachable (which is itself a good
-    /// sign). Also reports whether UPnP was found enabled at all.
-    func exposedPorts(completion: @escaping (_ ports: Set<Int>, _ upnpEnabled: Bool, _ mappings: [PortMapping]) -> Void) {
-        discoverControlURL { controlURL, serviceType in
-            guard let controlURL = controlURL, let serviceType = serviceType else {
-                completion([], false, []); return
-            }
-            self.walkMappings(controlURL: controlURL, serviceType: serviceType) { mappings in
-                let ports = Set(mappings.map { $0.internalPort })
-                completion(ports, true, mappings)
+    func routerTable(candidates: [String], completion: @escaping (UPnPResult) -> Void) {
+        let hosts = candidates.filter { LocalOnly.isAllowed($0) }
+        searchUnicast(hosts, 0) { location in
+            if let loc = location { self.finish(location: loc, completion: completion); return }
+            let urls = hosts.flatMap { h in UPnPClient.knownPaths.compactMap { URL(string: "http://\(h):\($0.0)\($0.1)") } }
+            self.probeKnown(urls, 0) { location in
+                if let loc = location { self.finish(location: loc, completion: completion) }
+                else { completion(UPnPResult(upnpEnabled: false, mappings: [], gateway: nil)) }
             }
         }
     }
 
-    // MARK: - SSDP discovery
-
-    private func discoverControlURL(completion: @escaping (URL?, String?) -> Void) {
-        let ssdpAddress = "239.255.255.250"
-        let ssdpPort: UInt16 = 1900
-        let search = """
-        M-SEARCH * HTTP/1.1\r
-        HOST: \(ssdpAddress):\(ssdpPort)\r
-        MAN: "ssdp:discover"\r
-        MX: 2\r
-        ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r
-        \r
-
-        """
-
-        guard let port = NWEndpoint.Port(rawValue: ssdpPort) else { completion(nil, nil); return }
-        let conn = NWConnection(host: NWEndpoint.Host(ssdpAddress), port: port, using: .udp)
-        var finished = false
-        let finish: (URL?, String?) -> Void = { url, st in
-            if finished { return }
-            finished = true
-            conn.cancel()
-            completion(url, st)
+    private func searchUnicast(_ hosts: [String], _ i: Int, _ completion: @escaping (String?) -> Void) {
+        guard i < hosts.count else { completion(nil); return }
+        msearch(host: hosts[i]) { loc in
+            if let loc = loc { completion(loc) } else { self.searchUnicast(hosts, i + 1, completion) }
         }
+    }
 
+    private func msearch(host: String, completion: @escaping (String?) -> Void) {
+        guard let port = NWEndpoint.Port(rawValue: 1900) else { completion(nil); return }
+        let msg = "M-SEARCH * HTTP/1.1\r\nHOST: \(LocalOnly.ssdpGroup):1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\n" +
+                  "ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n\r\n"
+        let conn = NWConnection(host: NWEndpoint.Host(host), port: port, using: .udp)
+        var finished = false
+        let finish: (String?) -> Void = { v in
+            self.queue.async {
+                if finished { return }
+                finished = true
+                conn.cancel()
+                completion(v)
+            }
+        }
         conn.stateUpdateHandler = { state in
-            if case .ready = state {
-                conn.send(content: search.data(using: .utf8), completion: .contentProcessed { _ in })
+            switch state {
+            case .ready:
+                conn.send(content: msg.data(using: .utf8), completion: .contentProcessed { _ in })
                 conn.receiveMessage { data, _, _, _ in
-                    guard let data = data, let text = String(data: data, encoding: .utf8),
-                          let loc = self.header(text, "LOCATION") ?? self.header(text, "Location"),
-                          let descURL = URL(string: loc) else { finish(nil, nil); return }
-                    self.fetchDescription(descURL) { control, st in finish(control, st) }
+                    let text = data.flatMap { String(data: $0, encoding: .isoLatin1) } ?? ""
+                    finish(self.header(text, "LOCATION"))
                 }
-            } else if case .failed = state {
-                finish(nil, nil)
+            case .failed, .waiting:
+                finish(nil)
+            default:
+                break
             }
         }
         conn.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + 3.0) { finish(nil, nil) }
+        queue.asyncAfter(deadline: .now() + 1.5) { finish(nil) }
     }
 
-    // MARK: - Device description
+    private func probeKnown(_ urls: [URL], _ i: Int, _ completion: @escaping (String?) -> Void) {
+        guard i < urls.count else { completion(nil); return }
+        fetch(urls[i], timeout: 1.5) { body in
+            if let b = body, b.contains("<controlURL>") { completion(urls[i].absoluteString) }
+            else { self.probeKnown(urls, i + 1, completion) }
+        }
+    }
 
-    private func fetchDescription(_ url: URL, completion: @escaping (URL?, String?) -> Void) {
-        var req = URLRequest(url: url)
-        req.timeoutInterval = 4
-        URLSession.shared.dataTask(with: req) { data, _, _ in
-            guard let data = data, let xml = String(data: data, encoding: .utf8) else {
-                completion(nil, nil); return
-            }
-            // Prefer WANIPConnection, fall back to WANPPPConnection.
-            let serviceTypes = ["urn:schemas-upnp-org:service:WANIPConnection:1",
-                                "urn:schemas-upnp-org:service:WANPPPConnection:1"]
-            for st in serviceTypes {
-                if let controlPath = self.controlURLForService(xml, serviceType: st) {
-                    let base = URL(string: "/", relativeTo: url)?.baseURL ?? url
-                    let control = URL(string: controlPath, relativeTo: base) ??
-                                  URL(string: controlPath, relativeTo: url)
-                    completion(control, st)
-                    return
+    private func finish(location: String, completion: @escaping (UPnPResult) -> Void) {
+        guard let url = URL(string: location), let host = url.host, LocalOnly.isAllowed(host) else {
+            completion(UPnPResult(upnpEnabled: false, mappings: [], gateway: nil)); return
+        }
+        fetch(url, timeout: 3) { xml in
+            guard let xml = xml else { completion(UPnPResult(upnpEnabled: true, mappings: [], gateway: host)); return }
+            var control: URL? = nil
+            var service = ""
+            for st in UPnPClient.serviceTypes {
+                if let path = self.controlURL(xml, st), let abs = URL(string: path, relativeTo: url)?.absoluteURL {
+                    control = abs; service = st; break
                 }
             }
-            completion(nil, nil)
-        }.resume()
-    }
-
-    // Pull the controlURL that sits in the same <service> block as serviceType.
-    private func controlURLForService(_ xml: String, serviceType: String) -> String? {
-        guard let range = xml.range(of: serviceType) else { return nil }
-        // search a window around the serviceType for the nearest controlURL
-        let after = xml[range.upperBound...]
-        if let c = after.range(of: "<controlURL>"),
-           let e = after.range(of: "</controlURL>", range: c.upperBound..<after.endIndex) {
-            return String(after[c.upperBound..<e.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return nil
-    }
-
-    // MARK: - Walk port mappings
-
-    private func walkMappings(controlURL: URL, serviceType: String,
-                              completion: @escaping ([PortMapping]) -> Void) {
-        var mappings: [PortMapping] = []
-        func step(_ index: Int) {
-            if index > 60 { completion(mappings); return }   // safety bound
-            getMapping(controlURL: controlURL, serviceType: serviceType, index: index) { mapping in
-                if let m = mapping {
-                    mappings.append(m)
-                    step(index + 1)
-                } else {
-                    completion(mappings)   // no more entries
-                }
+            guard let controlURL = control else { completion(UPnPResult(upnpEnabled: true, mappings: [], gateway: host)); return }
+            self.walk(controlURL: controlURL, serviceType: service, index: 0, acc: []) { mappings in
+                completion(UPnPResult(upnpEnabled: true, mappings: mappings, gateway: host))
             }
         }
-        step(0)
     }
 
-    private func getMapping(controlURL: URL, serviceType: String, index: Int,
-                            completion: @escaping (PortMapping?) -> Void) {
+    private func walk(controlURL: URL, serviceType: String, index: Int, acc: [PortMapping], completion: @escaping ([PortMapping]) -> Void) {
+        guard index < 60 else { completion(acc); return }
+        getMapping(controlURL: controlURL, serviceType: serviceType, index: index) { m in
+            guard let m = m else { completion(acc); return }
+            self.walk(controlURL: controlURL, serviceType: serviceType, index: index + 1, acc: acc + [m], completion: completion)
+        }
+    }
+
+    private func getMapping(controlURL: URL, serviceType: String, index: Int, completion: @escaping (PortMapping?) -> Void) {
         let body = """
         <?xml version="1.0"?>
         <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-        <s:Body>
-        <u:GetGenericPortMappingEntry xmlns:u="\(serviceType)">
+        <s:Body><u:GetGenericPortMappingEntry xmlns:u="\(serviceType)">
         <NewPortMappingIndex>\(index)</NewPortMappingIndex>
-        </u:GetGenericPortMappingEntry>
-        </s:Body>
-        </s:Envelope>
+        </u:GetGenericPortMappingEntry></s:Body></s:Envelope>
         """
-        var req = URLRequest(url: controlURL)
-        req.httpMethod = "POST"
-        req.timeoutInterval = 4
-        req.setValue("text/xml; charset=\"utf-8\"", forHTTPHeaderField: "Content-Type")
-        req.setValue("\"\(serviceType)#GetGenericPortMappingEntry\"", forHTTPHeaderField: "SOAPAction")
-        req.httpBody = body.data(using: .utf8)
+        let headers = ["Content-Type": "text/xml; charset=\"utf-8\"",
+                       "SOAPAction": "\"\(serviceType)#GetGenericPortMappingEntry\""]
+        fetch(controlURL, timeout: 3, method: "POST", body: body, headers: headers) { xml in
+            guard let xml = xml, let ext = self.tag(xml, "NewExternalPort").flatMap({ Int($0) }),
+                  let int = self.tag(xml, "NewInternalPort").flatMap({ Int($0) }) else { completion(nil); return }
+            completion(PortMapping(externalPort: ext, internalPort: int,
+                                   internalClient: self.tag(xml, "NewInternalClient") ?? "",
+                                   proto: self.tag(xml, "NewProtocol") ?? "TCP"))
+        }
+    }
 
-        URLSession.shared.dataTask(with: req) { data, resp, _ in
-            guard let data = data, let xml = String(data: data, encoding: .utf8),
-                  (resp as? HTTPURLResponse)?.statusCode == 200 else {
-                completion(nil); return
-            }
-            let ext = self.tag(xml, "NewExternalPort")
-            let intp = self.tag(xml, "NewInternalPort")
-            let client = self.tag(xml, "NewInternalClient")
-            let proto = self.tag(xml, "NewProtocol")
-            if let e = ext.flatMap({ Int($0) }), let i = intp.flatMap({ Int($0) }) {
-                completion(PortMapping(externalPort: e, internalPort: i,
-                                       internalClient: client ?? "", proto: proto ?? "TCP"))
-            } else {
-                completion(nil)
-            }
+    private func fetch(_ url: URL, timeout: TimeInterval, method: String = "GET", body: String? = nil,
+                       headers: [String: String] = [:], completion: @escaping (String?) -> Void) {
+        // the address came from a device's reply, so it is not trusted
+        guard let host = url.host, LocalOnly.isAllowed(host) else { completion(nil); return }
+        var req = URLRequest(url: url, timeoutInterval: timeout)
+        req.httpMethod = method
+        headers.forEach { req.setValue($1, forHTTPHeaderField: $0) }
+        if let b = body { req.httpBody = b.data(using: .utf8) }
+        URLSession.shared.dataTask(with: req) { data, _, _ in
+            completion(data.flatMap { String(data: $0, encoding: .utf8) })
         }.resume()
     }
 
-    // MARK: - Tiny parsers
+    private func controlURL(_ xml: String, _ serviceType: String) -> String? {
+        guard let at = xml.range(of: serviceType) else { return nil }
+        let after = xml[at.lowerBound...]
+        guard let o = after.range(of: "<controlURL>"), let c = after.range(of: "</controlURL>", range: o.upperBound..<after.endIndex) else { return nil }
+        return String(after[o.upperBound..<c.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     private func header(_ text: String, _ name: String) -> String? {
-        for line in text.split(separator: "\r\n") {
-            if line.uppercased().hasPrefix(name.uppercased() + ":") {
-                return String(line.drop(while: { $0 != ":" }).dropFirst()).trimmingCharacters(in: .whitespaces)
-            }
+        for line in text.components(separatedBy: "\r\n") where line.uppercased().hasPrefix(name.uppercased() + ":") {
+            let v = line.drop(while: { $0 != ":" }).dropFirst().trimmingCharacters(in: .whitespaces)
+            return v.isEmpty ? nil : v
         }
         return nil
     }
 
     private func tag(_ xml: String, _ name: String) -> String? {
-        guard let o = xml.range(of: "<\(name)>"),
-              let c = xml.range(of: "</\(name)>", range: o.upperBound..<xml.endIndex) else { return nil }
+        guard let o = xml.range(of: "<\(name)>"), let c = xml.range(of: "</\(name)>", range: o.upperBound..<xml.endIndex) else { return nil }
         return String(xml[o.upperBound..<c.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

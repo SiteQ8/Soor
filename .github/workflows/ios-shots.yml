@@ -58,7 +58,7 @@ jobs:
             sleep 6
             xcrun simctl io "$UDID" screenshot "shots/$1-$4-$3.png"
           }
-          for pair in "home 1" "scanning 2" "results 3" "detail 4" "about 5"; do
+          for pair in "home 1" "scanning 2" "results 3" "detail 4" "device 5" "about 6"; do
             set -- $pair
             shoot ar ar_KW "$1" "$2"
             shoot en en_US "$1" "$2"

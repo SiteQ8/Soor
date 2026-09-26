@@ -1,60 +1,79 @@
 import SwiftUI
 import UIKit
+import CoreText
 
-// The Soor look: Kuwait navy (#0033A0) with a warm gold signal, on a deep field.
-// Colours adapt to light and dark. Severity has its own scale.
+// The Soor identity: Kuwait navy with a warm gold signal on a deep field, set in
+// Readex Pro, the same typeface as the site and the Android app, with IBM Plex
+// Mono for addresses and ports. Both ship in the asset catalog under the SIL
+// Open Font License and are registered at launch.
 
 enum Theme {
-    static let navy      = Color(hex: 0x0033A0)
-    static let navyLite  = Color(hex: 0x4C70BC)
-    static let navyDeep  = Color(hex: 0x002168)
-    static let signal    = Color(hex: 0xE8A13A)
+    static let navy = Color(hex: 0x0033A0)
+    static let navyBright = Color(hex: 0x1747B8)
+    static let navyLite = Color(hex: 0x4C70BC)
+    static let navyDeep = Color(hex: 0x002168)
+    static let signal = Color(hex: 0xE8A13A)
+    static let bg = Color(hex: 0x05060E)
+    static let bg2 = Color(hex: 0x0A1024)
+    static let panel = Color(hex: 0x0F1730)
+    static let panel2 = Color(hex: 0x16214A)
+    static let ink = Color(hex: 0xEAF0FB)
+    static let ink2 = Color(hex: 0xA7B4D4)
+    static let ink3 = Color(hex: 0x7584AD)
+    static let rule = Color(hex: 0x23305A)
+    static let ok = Color(hex: 0x52C48D)
+    static let crit = Color(hex: 0xFF6B5B)
+    static let high = Color(hex: 0xF0904A)
+    static let med = Color(hex: 0xE8C34A)
+    static let info = Color(hex: 0x6FA8E8)
 
-    static func bg(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(hex: 0x05060E) : Color(hex: 0xEEF2FB)
-    }
-    static func panel(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(hex: 0x0F1730) : .white
-    }
-    static func ink(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(hex: 0xEAF0FB) : Color(hex: 0x0A1024)
-    }
-    static func ink2(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(hex: 0xA7B4D4) : Color(hex: 0x4A5578)
-    }
-    static func rule(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(hex: 0x23305A) : Color(hex: 0xD3DBEF)
-    }
-
-    static func severityColor(_ s: Severity, _ scheme: ColorScheme) -> Color {
+    static func severity(_ s: Severity?) -> Color {
+        guard let s = s else { return ok }
         switch s {
-        case .critical: return Color(hex: 0xFF6B5B)
-        case .high:     return Color(hex: 0xF0904A)
-        case .medium:   return Color(hex: 0xE8C34A)
-        case .low:      return Color(hex: 0x6FA8E8)
-        case .info:     return Color(hex: 0x6FA8E8)
+        case .critical: return crit
+        case .high: return high
+        case .medium: return med
+        case .low, .info: return info
+        }
+    }
+
+    static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        let name: String
+        if weight == .bold || weight == .heavy || weight == .black { name = "ReadexPro-Bold" }
+        else if weight == .semibold { name = "ReadexPro-SemiBold" }
+        else if weight == .medium { name = "ReadexPro-Medium" }
+        else { name = "ReadexPro-Regular" }
+        return .custom(name, size: size)
+    }
+
+    static func mono(_ size: CGFloat, bold: Bool = false) -> Font {
+        .custom(bold ? "IBMPlexMono-Medium" : "IBMPlexMono-Regular", size: size)
+    }
+
+    /// Registers the bundled fonts from the asset catalog once, at launch.
+    static func registerFonts() {
+        for name in ["ReadexProRegular", "ReadexProMedium", "ReadexProSemiBold", "ReadexProBold", "IBMPlexMonoRegular", "IBMPlexMonoMedium"] {
+            guard let asset = NSDataAsset(name: name),
+                  let provider = CGDataProvider(data: asset.data as CFData),
+                  let font = CGFont(provider) else { continue }
+            CTFontManagerRegisterGraphicsFont(font, nil)
         }
     }
 }
 
 extension Color {
-    init(hex: UInt) {
-        self.init(
-            .sRGB,
-            red: Double((hex >> 16) & 0xff) / 255,
-            green: Double((hex >> 8) & 0xff) / 255,
-            blue: Double(hex & 0xff) / 255,
-            opacity: 1
-        )
+    init(hex: UInt32) {
+        self.init(.sRGB,
+                  red: Double((hex >> 16) & 0xFF) / 255,
+                  green: Double((hex >> 8) & 0xFF) / 255,
+                  blue: Double(hex & 0xFF) / 255,
+                  opacity: 1)
     }
 }
 
-// The app's language is the one iOS chose for Soor: the language set in
-// Settings > Soor > Language, else the first of the phone's own languages that
-// Soor speaks, else English. iOS shows that Language option because the app
-// carries an Arabic and an English localization. Soor keeps no language setting
-// of its own, so the phone's Settings is the one place to change it, and iOS
-// relaunches the app in the new language.
+// Soor speaks Arabic and English. Apple lets the phone, not the app, choose an
+// app's language, so the app follows the phone and its Settings page carries
+// the Language option; iOS relaunches the app in the new language.
 final class AppState: ObservableObject {
     @Published var lang: Lang
 

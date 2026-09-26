@@ -27,14 +27,27 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_http._tcp</string>
-		<string>_rtsp._tcp</string>
+		<string>_companion-link._tcp</string>
+		<string>_rdlink._tcp</string>
 		<string>_airplay._tcp</string>
+		<string>_raop._tcp</string>
 		<string>_googlecast._tcp</string>
-		<string>_ipp._tcp</string>
 		<string>_smb._tcp</string>
+		<string>_ssh._tcp</string>
+		<string>_workstation._tcp</string>
+		<string>_ipp._tcp</string>
+		<string>_printer._tcp</string>
+		<string>_http._tcp</string>
+		<string>_hap._tcp</string>
+		<string>_spotify-connect._tcp</string>
+		<string>_sonos._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Soor scans the Wi-Fi network your phone is on to find the devices on it and the ports they leave open. Nothing leaves your phone.</string>
