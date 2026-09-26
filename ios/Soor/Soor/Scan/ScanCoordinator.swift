@@ -38,6 +38,7 @@ final class ScanCoordinator: ObservableObject {
     @Published var devices: [DeviceInfo] = []
     @Published var newFindings: Set<String> = []
     @Published var fixedCount = 0
+    @Published var checks: [NetCheck] = []
     @Published var firstScan = false
     @Published var lastScan: Date?
     @Published var network: LocalNet?
@@ -106,6 +107,7 @@ final class ScanCoordinator: ObservableObject {
         }
         upnpEnabled = router.upnpEnabled
         event(router.upnpEnabled ? "upnp-on" : "upnp-off")
+        checks = NetworkChecks.run(externalIp: router.externalIp)
         var full = net
         full.gateway = router.gateway ?? "\(net.prefix).1"
         let gw = full.gateway ?? "\(net.prefix).1"
@@ -282,6 +284,7 @@ final class ScanCoordinator: ObservableObject {
         portsChecked = 1834
         duration = 48
         upnpEnabled = true
+        checks = [NetworkChecks.external("37.36.12.204")]
         lastScan = Date()
         state = .done
     }

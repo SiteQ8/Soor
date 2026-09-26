@@ -20,6 +20,8 @@ struct UPnPResult {
     let upnpEnabled: Bool
     let mappings: [PortMapping]
     let gateway: String?
+    /// the address the world sees, as the router itself reports it
+    var externalIp: String? = nil
 
     /// "ip:port" for every port the router forwards to the internet, tied to its own device
     var exposed: Set<String> { Set(mappings.map { "\($0.internalClient):\($0.internalPort)" }) }
@@ -109,7 +111,9 @@ final class UPnPClient {
             }
             guard let controlURL = control else { completion(UPnPResult(upnpEnabled: true, mappings: [], gateway: host)); return }
             self.walk(controlURL: controlURL, serviceType: service, index: 0, acc: []) { mappings in
-                completion(UPnPResult(upnpEnabled: true, mappings: mappings, gateway: host))
+                self.externalIp(controlURL: controlURL, serviceType: service) { ip in
+                    completion(UPnPResult(upnpEnabled: true, mappings: mappings, gateway: host, externalIp: ip))
+                }
             }
         }
     }
@@ -119,6 +123,23 @@ final class UPnPClient {
         getMapping(controlURL: controlURL, serviceType: serviceType, index: index) { m in
             guard let m = m else { completion(acc); return }
             self.walk(controlURL: controlURL, serviceType: serviceType, index: index + 1, acc: acc + [m], completion: completion)
+        }
+    }
+
+    /// GetExternalIPAddress, the one thing the router knows about the outside.
+    private func externalIp(controlURL: URL, serviceType: String, completion: @escaping (String?) -> Void) {
+        let body = """
+        <?xml version="1.0"?>
+        <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+        <s:Body><u:GetExternalIPAddress xmlns:u="\(serviceType)"></u:GetExternalIPAddress></s:Body></s:Envelope>
+        """
+        let headers = ["Content-Type": "text/xml; charset=\"utf-8\"",
+                       "SOAPAction": "\"\(serviceType)#GetExternalIPAddress\""]
+        fetch(controlURL, timeout: 3, method: "POST", body: body, headers: headers) { xml in
+            guard let xml = xml, let ip = self.tag(xml, "NewExternalIPAddress"), ip != "0.0.0.0" else { completion(nil); return }
+            let parts = ip.split(separator: ".")
+            guard parts.count == 4, parts.allSatisfy({ Int($0) != nil }) else { completion(nil); return }
+            completion(ip)
         }
     }
 

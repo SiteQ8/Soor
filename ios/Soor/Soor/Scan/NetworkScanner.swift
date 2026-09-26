@@ -592,3 +592,82 @@ enum NetBIOS {
         return nil
     }
 }
+
+
+// MARK: - The network itself
+
+/// One check of the network itself, beyond any single device. Read from what the
+/// phone already knows and from the router's own answer; nothing is sent to find
+/// these out. Judged here, in both languages, because they are about the network
+/// rather than a host and port.
+struct NetCheck: Identifiable {
+    let id: String
+    let severity: Severity?
+    let titleAr: String
+    let titleEn: String
+    let detailAr: String
+    let detailEn: String
+    var linkAr: String? = nil
+    var linkEn: String? = nil
+    var link: String? = nil
+}
+
+enum NetworkChecks {
+    static func run(externalIp: String?) -> [NetCheck] {
+        var out: [NetCheck] = []
+        if hasPublicIPv6() {
+            out.append(NetCheck(id: "ipv6", severity: .low,
+                titleAr: "شبكتك تعمل بعناوين IPv6 عامة", titleEn: "Your network has public IPv6 addresses",
+                detailAr: "مع IPv6 قد يصل الإنترنت إلى الجهاز مباشرة دون المرور بجدول الراوتر الذي يفحصه سُور، فتأكد أن جدار حماية IPv6 مفعّل في الراوتر.",
+                detailEn: "With IPv6 the internet can reach a device directly, without the router's port table that Soor reads, so make sure the router's IPv6 firewall is on."))
+        }
+        if let ip = externalIp { out.append(external(ip)) }
+        return out
+    }
+
+    /// A public IPv6 address on the Wi-Fi interface, which bypasses the router's port table.
+    static func hasPublicIPv6() -> Bool {
+        var ifaddr: UnsafeMutablePointer<ifaddrs>? = nil
+        guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return false }
+        defer { freeifaddrs(ifaddr) }
+        var ptr: UnsafeMutablePointer<ifaddrs>? = first
+        while let p = ptr {
+            if let sa = p.pointee.ifa_addr, sa.pointee.sa_family == UInt8(AF_INET6),
+               String(cString: p.pointee.ifa_name) == "en0" {
+                let sin6 = UnsafeRawPointer(sa).assumingMemoryBound(to: sockaddr_in6.self).pointee
+                let b = withUnsafeBytes(of: sin6.sin6_addr) { Array($0) }
+                if b.count == 16 {
+                    let linkLocal = b[0] == 0xFE && (b[1] & 0xC0) == 0x80
+                    let unique = (b[0] & 0xFE) == 0xFC
+                    let global = (b[0] & 0xE0) == 0x20
+                    if global && !linkLocal && !unique { return true }
+                }
+            }
+            ptr = p.pointee.ifa_next
+        }
+        return false
+    }
+
+    /// The address the world sees, as the router itself reports it.
+    static func external(_ ip: String) -> NetCheck {
+        let p = ip.split(separator: ".").compactMap { Int($0) }
+        let cgnat = p.count == 4 && p[0] == 100 && (64...127).contains(p[1])
+        if cgnat {
+            return NetCheck(id: "wan", severity: nil,
+                titleAr: "بيتك خلف CGNAT", titleEn: "Your home is behind CGNAT",
+                detailAr: "عنوان راوترك على الإنترنت (\(ip)) مشترك عند مزوّد الخدمة، فلا يصل أحد من الإنترنت إلى راوترك مباشرة، ومعه لا تعمل المنافذ الممرَّرة أصلًا.",
+                detailEn: "Your router's internet address (\(ip)) is shared at the provider, so nobody on the internet reaches your router directly, and forwarded ports do not work anyway.")
+        }
+        if LocalOnly.isAllowed(ip) {
+            return NetCheck(id: "wan", severity: nil,
+                titleAr: "راوترك خلف راوتر آخر", titleEn: "Your router sits behind another router",
+                detailAr: "الراوتر يرى أمامه عنوانًا داخليًا (\(ip))، فالإنترنت لا يصل إليه مباشرة، وجدول المنافذ الذي يهم هو جدول الراوتر الخارجي.",
+                detailEn: "The router sees a private address in front of it (\(ip)), so the internet does not reach it directly; the port table that matters is the outer router's.")
+        }
+        return NetCheck(id: "wan", severity: .info,
+            titleAr: "عنوان بيتك على الإنترنت", titleEn: "Your home's address on the internet",
+            detailAr: "\(ip) هو العنوان الذي يراك به العالم، ومحركات الفحص مثل Shodan تفهرس ما يظهر عليه للإنترنت، فانظر ماذا تعرف عنه.",
+            detailEn: "\(ip) is the address the world sees you at, and scanning engines such as Shodan index whatever it shows to the internet, so see what they know about it.",
+            linkAr: "ماذا يرى Shodan عن عنوانك", linkEn: "What Shodan sees at your address", link: "https://www.shodan.io/host/\(ip)")
+    }
+}
