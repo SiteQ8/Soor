@@ -47,6 +47,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -94,6 +96,7 @@ import com.eworldq8.soor.scan.DeviceInfo
 import com.eworldq8.soor.scan.DeviceKind
 import com.eworldq8.soor.scan.DeviceKinds
 import com.eworldq8.soor.scan.LocalNet
+import com.eworldq8.soor.scan.NetCheck
 import com.eworldq8.soor.scan.Phase
 import com.eworldq8.soor.scan.ScanEvent
 import com.eworldq8.soor.scan.ScanState
@@ -107,7 +110,8 @@ import com.eworldq8.soor.scan.Words
 private fun t(ar: Boolean, a: String, e: String) = if (ar) a else e
 private fun ltr(s: String) = "\u2066$s\u2069"
 private fun hostPort(f: Finding) = if (f.port > 0) "${f.host}:${f.port}" else f.host
-private fun nameOf(d: DeviceInfo, ar: Boolean) = d.name ?: DeviceKinds.label(d.kind, ar)
+private fun nameOf(d: DeviceInfo, ar: Boolean) = d.label ?: d.name ?: DeviceKinds.label(d.kind, ar)
+private fun day(ms: Long): String = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date(ms))
 private fun firstSentence(s: String): String {
     val i = s.indexOfFirst { it == '.' || it == '؟' || it == '!' }
     return if (i in 1 until s.length - 1) s.substring(0, i + 1) else s
@@ -174,6 +178,7 @@ fun SoorApp(vm: ScanViewModel) {
         onStop = { vm.stop() },
         onHome = { vm.home() },
         onResults = { vm.showResults() },
+        onLabel = { ip, name -> vm.setLabel(ip, name) },
     )
 }
 
@@ -183,6 +188,7 @@ fun SoorScreen(
     onScan: () -> Unit, onToggleLang: () -> Unit, onShare: () -> Unit,
     onForget: () -> Unit, onOpen: (String) -> Unit, initialSheet: Sheet? = null,
     onStop: () -> Unit = {}, onHome: () -> Unit = {}, onResults: () -> Unit = {},
+    onLabel: (String, String) -> Unit = { _, _ -> },
 ) {
     val ar = lang == Lang.AR
     var sheet by remember { mutableStateOf(initialSheet) }
@@ -200,7 +206,7 @@ fun SoorScreen(
                 TopBar(ar, onToggleLang) { sheet = Sheet.About }
                 when (ui.state) {
                     ScanState.SCANNING -> Scanning(ui, ar, onStop)
-                    ScanState.DONE -> Results(ui, lang, knowledge, onScan, onShare,
+                    ScanState.DONE -> Results(ui, lang, knowledge, onScan, onShare, onOpen,
                         onFinding = { sheet = Sheet.OfFinding(it) }, onDevice = { sheet = Sheet.OfDevice(it) })
                     else -> Home(ui, ar, onScan, onResults)
                 }
@@ -209,8 +215,8 @@ fun SoorScreen(
         when (val s = sheet) {
             is Sheet.About -> AboutSheet(ar, onDismiss = { sheet = null }, onForget = onForget, onOpen = onOpen)
             is Sheet.OfFinding -> FindingSheet(s.finding, ui.devices.firstOrNull { it.ip == s.finding.host }, knowledge, lang) { sheet = null }
-            is Sheet.OfDevice -> DeviceSheet(s.device, ui.findings.filter { it.host == s.device.ip }, knowledge, lang,
-                onFinding = { sheet = Sheet.OfFinding(it) }, onOpen = onOpen) { sheet = null }
+            is Sheet.OfDevice -> DeviceSheet(ui.devices.firstOrNull { it.ip == s.device.ip } ?: s.device, ui.findings.filter { it.host == s.device.ip }, knowledge, lang,
+                onFinding = { sheet = Sheet.OfFinding(it) }, onOpen = onOpen, onLabel = onLabel) { sheet = null }
             null -> {}
         }
     }
@@ -523,7 +529,7 @@ private fun toneOf(fs: List<Finding>): Tone = when {
 
 @Composable
 private fun Results(
-    ui: ScanUiState, lang: Lang, knowledge: Knowledge, onScan: () -> Unit, onShare: () -> Unit,
+    ui: ScanUiState, lang: Lang, knowledge: Knowledge, onScan: () -> Unit, onShare: () -> Unit, onOpen: (String) -> Unit,
     onFinding: (Finding) -> Unit, onDevice: (DeviceInfo) -> Unit,
 ) {
     val ar = lang == Lang.AR
@@ -540,6 +546,10 @@ private fun Results(
             }
         } else {
             item { CleanCard(ar) }
+        }
+        if (ui.checks.isNotEmpty()) {
+            item { SectionTitle(t(ar, "الشبكة نفسها", "The network itself")) }
+            items(ui.checks, key = { "check:" + it.id }) { c -> CheckRow(c, ar, onOpen) }
         }
         item { SectionTitle(t(ar, "أجهزة شبكتك", "Devices on your network"), ui.devices.size) }
         items(ui.devices, key = { it.ip }) { d -> DeviceRow(d, ar) { onDevice(d) } }
@@ -619,6 +629,21 @@ private fun SeverityPills(fs: List<Finding>, lang: Lang) {
                     Text("$n  ${SoorReport.severityLabel(s, lang)}", color = c, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CheckRow(c: NetCheck, ar: Boolean, onOpen: (String) -> Unit) {
+    val col = Theme.severity(c.severity)
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.panel).border(1.dp, Theme.rule, RoundedCornerShape(16.dp)).padding(14.dp), verticalAlignment = Alignment.Top) {
+        Box(Modifier.padding(top = 6.dp).size(10.dp).clip(CircleShape).background(col))
+        H(12)
+        Column(Modifier.weight(1f)) {
+            Text(t(ar, c.titleAr, c.titleEn), color = Theme.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, lineHeight = 22.sp)
+            V(3)
+            Text(t(ar, c.detailAr, c.detailEn), color = Theme.ink2, fontSize = 13.sp, lineHeight = 20.sp)
+            if (c.link != null) { V(8); Pill(t(ar, c.linkAr ?: "", c.linkEn ?: "")) { onOpen(c.link) } }
         }
     }
 }
@@ -734,8 +759,9 @@ private fun FindingSheet(f: Finding, device: DeviceInfo?, k: Knowledge, lang: La
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: Lang, onFinding: (Finding) -> Unit, onOpen: (String) -> Unit, onDismiss: () -> Unit) {
+private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: Lang, onFinding: (Finding) -> Unit, onOpen: (String) -> Unit, onLabel: (String, String) -> Unit, onDismiss: () -> Unit) {
     val ar = lang == Lang.AR
+    var draft by remember(d.ip) { mutableStateOf(d.label ?: "") }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Theme.panel, dragHandle = { BottomSheetDefaults.DragHandle(color = Theme.rule) }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
@@ -746,8 +772,10 @@ private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: La
                 H(14)
                 Column(Modifier.weight(1f)) {
                     Text(nameOf(d, ar), color = Theme.ink, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    if (d.name != null) Text(DeviceKinds.label(d.kind, ar), color = Theme.ink2, fontSize = 13.sp)
+                    val under = listOfNotNull(if (d.label != null) d.name else null, if (d.name != null || d.label != null) DeviceKinds.label(d.kind, ar) else null)
+                    if (under.isNotEmpty()) Text(under.joinToString(" · "), color = Theme.ink2, fontSize = 13.sp)
                     Mono(d.ip)
+                    d.firstSeen?.let { Text(t(ar, "ظهر لأول مرة ", "First seen ") + ltr(day(it)), color = Theme.ink3, fontSize = 12.sp) }
                 }
                 if (d.isNew) Badge(t(ar, "جديد", "New"), Theme.signal)
             }
@@ -756,6 +784,20 @@ private fun DeviceSheet(d: DeviceInfo, fs: List<Finding>, k: Knowledge, lang: La
                 V(12)
                 SecondaryButton(t(ar, "افتح لوحة الراوتر في المتصفح", "Open the router's page in the browser"), Icons.Outlined.Settings,
                     { onOpen((if (443 in d.ports && 80 !in d.ports) "https://" else "http://") + d.ip + "/") }, Modifier.fillMaxWidth())
+            }
+            V(16)
+            Label(t(ar, "سمِّ هذا الجهاز", "Name this device"))
+            V(6)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(value = draft, onValueChange = { draft = it.take(40) }, modifier = Modifier.weight(1f), singleLine = true,
+                    placeholder = { Text(t(ar, "مثل: كاميرا الحوش", "e.g. Yard camera"), color = Theme.ink3, fontSize = 14.sp) },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Theme.navyLite, unfocusedBorderColor = Theme.rule,
+                        focusedTextColor = Theme.ink, unfocusedTextColor = Theme.ink, cursorColor = Theme.signal))
+                H(8)
+                Box(Modifier.height(48.dp).clip(RoundedCornerShape(12.dp)).background(Theme.navy).clickable(role = Role.Button) { onLabel(d.ip, draft) }
+                    .padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+                    Text(t(ar, "احفظ", "Save"), color = Color.White, fontWeight = FontWeight.SemiBold)
+                }
             }
             V(18)
             Label(t(ar, "المنافذ المفتوحة", "Open ports"))
@@ -813,7 +855,7 @@ private fun AboutSheet(ar: Boolean, onDismiss: () -> Unit, onForget: () -> Unit,
                 Label(t(ar, "من صنع سُور", "Who made Soor"))
                 V(6)
                 Text(t(ar, "علي العنزي", "Ali AlEnezi"), color = Theme.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(t(ar, "مشروع مفتوح المصدر من الكويت، للناس لا للشركات", "An open source project from Kuwait, for people rather than companies"), color = Theme.ink2, fontSize = 13.sp, lineHeight = 20.sp)
+                Text(t(ar, "مشروع مفتوح المصدر من الكويت", "An open source project from Kuwait"), color = Theme.ink2, fontSize = 13.sp, lineHeight = 20.sp)
                 V(10)
                 Row(Modifier.clip(RoundedCornerShape(10.dp)).background(Theme.navy.copy(alpha = 0.22f)).clickable(role = Role.Button) { onOpen("mailto:site@hotmail.com") }
                     .padding(horizontal = 12.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -834,8 +876,8 @@ private fun AboutSheet(ar: Boolean, onDismiss: () -> Unit, onForget: () -> Unit,
                 t(ar, "لا يتصل إلا بعناوين داخل شبكة بيتك، إذ في شيفرته قاعدة ترفض أي عنوان خارجها قبل الاتصال به، ولا يفحص عبر بيانات الجوال أبدًا.",
                       "It only connects to addresses inside your home network: a rule in its code refuses any other address before connecting, and it never scans over mobile data."))
             AboutBlock(Icons.Outlined.Info, t(ar, "لا يجمع بياناتك", "It collects nothing"),
-                t(ar, "لا حساب فيه ولا خادم، ولا يحفظ في هاتفك إلا قائمة الأجهزة التي رآها في شبكتك وملخص آخر فحص ليخبرك بما تغيّر، ويمكنك مسحهما من هنا.",
-                      "No account and no server. The only things it keeps on your phone are the list of devices it has seen on your network and a summary of the last scan, to tell you what changed, and you can erase them here."))
+                t(ar, "لا حساب فيه ولا خادم، ولا يحفظ في هاتفك إلا قائمة الأجهزة التي رآها في شبكتك والأسماء التي تختارها لها وملخص آخر فحص ليخبرك بما تغيّر، ويمكنك مسحها كلها من هنا.",
+                      "No account and no server. The only things it keeps on your phone are the list of devices it has seen on your network, the names you give them, and a summary of the last scan, to tell you what changed, and you can erase them all here."))
             V(12)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pill(t(ar, "الموقع", "Website")) { onOpen("https://soor.3li.info/") }

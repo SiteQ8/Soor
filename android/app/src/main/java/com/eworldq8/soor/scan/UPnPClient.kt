@@ -24,7 +24,7 @@ import java.net.URI
 
 data class PortMapping(val externalPort: Int, val internalPort: Int, val internalClient: String, val proto: String)
 
-data class UPnPResult(val upnpEnabled: Boolean, val mappings: List<PortMapping>) {
+data class UPnPResult(val upnpEnabled: Boolean, val mappings: List<PortMapping>, val externalIp: String? = null) {
     /** "ip:port" for every port the router forwards to the internet, tied to its own device */
     val exposed: Set<String> get() = mappings.map { "${it.internalClient}:${it.internalPort}" }.toSet()
 }
@@ -57,7 +57,7 @@ class UPnPClient {
     fun routerTable(): UPnPResult {
         val location = discoverGateway() ?: return UPnPResult(false, emptyList())
         val (controlUrl, serviceType) = describe(location) ?: return UPnPResult(true, emptyList())
-        return UPnPResult(true, walkMappings(controlUrl, serviceType))
+        return UPnPResult(true, walkMappings(controlUrl, serviceType), externalIp(controlUrl, serviceType))
     }
 
     fun discoverAll(listenMs: Int = 2500): Map<String, SsdpDevice> {
@@ -178,6 +178,20 @@ class UPnPClient {
         val int = tag(xml, "NewInternalPort")?.toIntOrNull()
         if (ext == null || int == null) return null
         return PortMapping(ext, int, tag(xml, "NewInternalClient") ?: "", tag(xml, "NewProtocol") ?: "TCP")
+    }
+
+    /** GetExternalIPAddress, the one question the router answers about the outside. */
+    private fun externalIp(controlUrl: String, serviceType: String): String? {
+        val body = """<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body><u:GetExternalIPAddress xmlns:u="$serviceType"></u:GetExternalIPAddress></s:Body></s:Envelope>"""
+        val headers = mapOf(
+            "Content-Type" to "text/xml; charset=\"utf-8\"",
+            "SOAPAction" to "\"$serviceType#GetExternalIPAddress\"",
+        )
+        val xml = httpPost(controlUrl, body, headers) ?: return null
+        val ip = tag(xml, "NewExternalIPAddress") ?: return null
+        return ip.takeIf { it.matches(Regex("\\d{1,3}(\\.\\d{1,3}){3}")) && it != "0.0.0.0" }
     }
 
     // MARK: minimal HTTP over raw sockets, home network only (every request passes LocalOnly)

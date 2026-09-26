@@ -33,6 +33,9 @@ data class DeviceInfo(
     val isGateway: Boolean,
     val isNew: Boolean,
     val worst: Severity?,
+    val id: String = "ip:$ip",
+    val label: String? = null,
+    val firstSeen: Long? = null,
 )
 
 /** One thing the scan just did, kept as data so the screen can word it in either language. */
@@ -48,6 +51,7 @@ data class ScanUiState(
     val devices: List<DeviceInfo> = emptyList(),
     val newFindings: Set<String> = emptySet(),
     val fixedCount: Int = 0,
+    val checks: List<NetCheck> = emptyList(),
     val firstScan: Boolean = false,
     val lastScan: Long? = null,
     val network: LocalNet? = null,
@@ -89,6 +93,14 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun forgetDevices() = known.forget()
+
+    /** The person names a device; the name stays on the phone, tied to the device's identity. */
+    fun setLabel(ip: String, name: String) {
+        val d = _ui.value.devices.firstOrNull { it.ip == ip } ?: return
+        known.setLabel(d.id, name)
+        val label = known.label(d.id)
+        _ui.update { s -> s.copy(devices = s.devices.map { if (it.ip == ip) it.copy(label = label) else it }) }
+    }
 
     private var scanner: NetworkScanner? = null
 
@@ -179,6 +191,7 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
         for (h in hosts) {
             val id = KnownDevices.id(h.ip, ssdp[h.ip])
             ids += id
+            known.noteSeen(id)
             val isNew = seen != null && id !in seen
             if (isNew) newHosts += h.ip
             if (h.observations.isEmpty()) {
@@ -205,7 +218,9 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             val cameraVendor = h.observations.any { SoorEngine.matchCamera(it, knowledge.cameras) != null }
             val ports = h.openPorts + if (h.ip == gw && router.upnpEnabled && 1900 !in h.openPorts) listOf(1900) else emptyList()
             val found = announced[h.ip]
+            val id = KnownDevices.id(h.ip, ssdp[h.ip])
             DeviceInfo(
+                id = id, label = known.label(id), firstSeen = known.firstSeen(id),
                 ip = h.ip,
                 name = found?.name ?: pcNames[h.ip] ?: ssdp[h.ip]?.friendlyName,
                 kind = DeviceKinds.guess(ports.toSet(), ssdp[h.ip], h.ip == gw, cameraVendor,
@@ -223,6 +238,7 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             liveHosts = hosts.map { it.ip }, portsChecked = _ui.value.portsChecked,
             findings = findings, devices = devices, firstScan = seen == null,
             newFindings = newFindings, fixedCount = fixedCount,
+            checks = NetworkChecks.run(ctx, router.externalIp),
             lastScan = now, network = net, startedAt = _ui.value.startedAt,
             durationMs = _ui.value.startedAt?.let { now - it }, partial = stopped,
         )
@@ -245,9 +261,14 @@ class ScanViewModel(app: Application) : AndroidViewModel(app) {
             if (r.fix.isNotEmpty()) lines += (if (ar) "الحل: " else "Fix: ") + r.fix
             lines += ""
         }
+        if (s.checks.isNotEmpty()) {
+            lines += if (ar) "الشبكة نفسها:" else "The network itself:"
+            s.checks.forEach { c -> lines += "• " + (if (ar) c.titleAr else c.titleEn) + ": " + (if (ar) c.detailAr else c.detailEn) }
+            lines += ""
+        }
         lines += if (ar) "الأجهزة:" else "Devices:"
         s.devices.forEach { d ->
-            lines += "• " + (d.name ?: DeviceKinds.label(d.kind, ar)) + " | ${d.ip}" +
+            lines += "• " + (d.label ?: d.name ?: DeviceKinds.label(d.kind, ar)) + " | ${d.ip}" +
                 (if (d.ports.isNotEmpty()) " | " + d.ports.joinToString(", ") else "")
         }
         lines += ""

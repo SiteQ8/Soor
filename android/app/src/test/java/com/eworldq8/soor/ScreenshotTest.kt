@@ -11,6 +11,8 @@ import com.eworldq8.soor.engine.SoorEngine
 import com.eworldq8.soor.scan.DeviceInfo
 import com.eworldq8.soor.scan.DeviceKind
 import com.eworldq8.soor.scan.LocalNet
+import com.eworldq8.soor.scan.NetCheck
+import com.eworldq8.soor.engine.Severity
 import com.eworldq8.soor.scan.Phase
 import com.eworldq8.soor.scan.ScanEvent
 import com.eworldq8.soor.scan.ScanState
@@ -73,7 +75,7 @@ class ScreenshotTest {
     private val devices by lazy {
         listOf(
             dev("192.168.1.1", null, DeviceKind.ROUTER, listOf(80, 443, 1900), gw = true),
-            dev("192.168.1.64", null, DeviceKind.CAMERA, listOf(554)),
+            dev("192.168.1.64", null, DeviceKind.CAMERA, listOf(554)).copy(label = "كاميرا الحوش", firstSeen = 1758000000000L),
             dev("192.168.1.90", "Living Room TV", DeviceKind.TV, listOf(5555, 8008, 8009)),
             dev("192.168.1.30", "Office Printer", DeviceKind.PRINTER, listOf(80, 631, 9100)),
             dev("192.168.1.10", "DESKTOP-7K2QA", DeviceKind.COMPUTER, listOf(22)),
@@ -86,7 +88,13 @@ class ScreenshotTest {
         ScanUiState(state = ScanState.DONE, phase = Phase.JUDGE, progress = 1f, liveHosts = devices.map { it.ip },
             portsChecked = 1834, findings = findings, devices = devices, lastScan = 1758880800000L, network = net,
             startedAt = 1758880752000L, durationMs = 48000L, fixedCount = 2,
-            newFindings = setOf("exposed-camera-default|192.168.1.64|554"))
+            newFindings = setOf("exposed-camera-default|192.168.1.64|554"),
+            checks = listOf(
+                NetCheck("wifi", null, "الواي فاي مشفّر بـ WPA2", "Wi-Fi encrypted with WPA2", "تشفير جيد، وWPA3 أفضل منه إن كان راوترك يدعمه.", "Good encryption, and WPA3 is better if your router supports it."),
+                NetCheck("dns", null, "أسماء المواقع يجيب عنها الراوتر", "Name lookups go through the router", "خادم DNS في شبكتك هو 192.168.1.1، وهذا المعتاد.", "Your DNS server is 192.168.1.1, the usual arrangement."),
+                NetCheck("pdns", Severity.INFO, "بحث الأسماء يمر مكشوفًا", "Name lookups travel in the clear", "يمكنك تفعيل «DNS الخاص» في إعدادات أندرويد، الشبكة والإنترنت، ليُشفَّر بحثك عن أسماء المواقع، وهذا إعداد في هاتفك لا في الراوتر.", "You can turn on Private DNS in Android's Network and internet settings so your name lookups are encrypted; it is a phone setting, not a router one."),
+                NetCheck("wan", Severity.INFO, "عنوان بيتك على الإنترنت", "Your home's address on the internet", "37.36.12.204 هو العنوان الذي يراك به العالم، ومحركات الفحص مثل Shodan تفهرس ما يظهر عليه للإنترنت، فانظر ماذا تعرف عنه.", "37.36.12.204 is the address the world sees you at, and scanning engines such as Shodan index whatever it shows to the internet, so see what they know about it.", "ماذا يرى Shodan عن عنوانك", "What Shodan sees at your address", "https://www.shodan.io/host/37.36.12.204"),
+            ))
     }
     private val scanning = ScanUiState(state = ScanState.SCANNING, phase = Phase.PROBE, progress = 0.62f,
         liveHosts = listOf("192.168.1.1", "192.168.1.64", "192.168.1.90", "192.168.1.30", "192.168.1.10"), portsChecked = 1287,
@@ -112,6 +120,7 @@ class ScreenshotTest {
 
     @Test fun home_ar() = shot("ar-1-home", ScanUiState())
     @Test fun home_last_ar() = shot("ar-8-home-last", results.copy(state = ScanState.IDLE))
+    @Test fun network_ar() = shot("ar-9-network", results, scrollTo = 3 + findings.size)
     @Test fun scanning_ar() = shot("ar-2-scanning", scanning)
     @Test fun results_ar() = shot("ar-3-results", results)
     @Test fun devices_ar() = shot("ar-4-devices", results, scrollTo = 3 + findings.size)
