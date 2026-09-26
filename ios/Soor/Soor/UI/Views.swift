@@ -224,21 +224,20 @@ struct WallStrip: View {
 struct ConsentView: View {
     let ar: Bool
     let onConsent: () -> Void
-    @Environment(\.colorScheme) private var scheme
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(ar ? "افحص شبكتك أنت" : "Scan your own network")
-                .font(Theme.font(22, .bold)).foregroundStyle(Theme.ink(scheme))
+                .font(Theme.font(22, .bold)).foregroundStyle(Theme.ink)
             Text(ar ? "سُور لشبكة بيتك أو لشبكة أنت مسؤول عنها، وفحص شبكة لا تملكها، كشبكة مقهى أو مطار أو مكان عمل، قد يخالف القانون وهو خلاف الغرض من هذا التطبيق، وبضغطك تؤكد أن الشبكة التي تفحصها شبكتك."
                     : "Soor is for your home network, or a network you are responsible for. Scanning a network you do not own, such as a café, airport or workplace, may be against the law and is not what this app is for. By continuing you confirm the network you scan is yours.")
-                .font(Theme.font(15, .regular)).foregroundStyle(Theme.ink2(scheme)).lineSpacing(6)
+                .font(Theme.font(15, .regular)).foregroundStyle(Theme.ink2).lineSpacing(6)
             PrimaryButton(text: ar ? "أفهم، هذه شبكتي" : "I understand, this is my network", action: onConsent)
             Text(ar ? "يظهر هذا مرة واحدة، ويعود إن مسحت ذاكرة سُور من «عن سُور»." : "Shown once. It returns if you erase Soor's memory from About.")
-                .font(Theme.font(12.5, .regular)).foregroundStyle(Theme.ink2(scheme))
+                .font(Theme.font(12.5, .regular)).foregroundStyle(Theme.ink2)
         }
         .padding(22)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Theme.panel(scheme).ignoresSafeArea())
+        .background(Theme.panel.ignoresSafeArea())
         .environment(\.layoutDirection, ar ? .rightToLeft : .leftToRight)
         .presentationDetents([.medium, .large])
     }
