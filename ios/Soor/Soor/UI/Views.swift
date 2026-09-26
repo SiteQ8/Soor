@@ -319,6 +319,33 @@ struct GoldLabel: View {
     var body: some View { Text(text).font(Theme.font(13, .semibold)).foregroundStyle(Theme.signal) }
 }
 
+struct CheckRow: View {
+    let check: NetCheck
+    let ar: Bool
+    @Environment(\.openURL) private var openURL
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Circle().fill(Theme.severity(check.severity)).frame(width: 10, height: 10).padding(.top, 6)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ar ? check.titleAr : check.titleEn).font(Theme.font(15, .semibold)).foregroundStyle(Theme.ink)
+                Text(ar ? check.detailAr : check.detailEn).font(Theme.font(13)).foregroundStyle(Theme.ink2).lineSpacing(4)
+                if let link = check.link, let url = URL(string: link) {
+                    Button { openURL(url) } label: {
+                        Text(ar ? (check.linkAr ?? "") : (check.linkEn ?? "")).font(Theme.font(13, .medium))
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 4)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.rule, lineWidth: 1))
+    }
+}
+
 struct Note: View {
     let text: String
     var body: some View {
@@ -502,7 +529,7 @@ struct AboutSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 GoldLabel(text: t(ar, "من صنع سُور", "Who made Soor"))
                 Text(t(ar, "علي العنزي", "Ali AlEnezi")).font(Theme.font(17, .bold)).foregroundStyle(Theme.ink)
-                Text(t(ar, "مشروع مفتوح المصدر من الكويت، للناس لا للشركات", "An open source project from Kuwait, for people rather than companies"))
+                Text(t(ar, "مشروع مفتوح المصدر من الكويت", "An open source project from Kuwait"))
                     .font(Theme.font(13)).foregroundStyle(Theme.ink2).lineSpacing(4)
                 Button {
                     if let u = URL(string: "mailto:site@hotmail.com") { openURL(u) }

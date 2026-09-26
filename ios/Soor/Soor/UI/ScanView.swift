@@ -423,6 +423,10 @@ struct ResultsScreen: View {
                                     isNew: coord.newFindings.contains(KnownDevices.signature(f))) { onFinding(f) }
                     }
                 }
+                if !coord.checks.isEmpty {
+                    SectionTitle(text: t(ar, "الشبكة نفسها", "The network itself"))
+                    ForEach(coord.checks) { c in CheckRow(check: c, ar: ar) }
+                }
                 SectionTitle(text: t(ar, "أجهزة شبكتك", "Devices on your network"), count: coord.devices.count)
                 ForEach(coord.devices) { d in
                     DeviceRow(device: d, ar: ar) { onDevice(d) }
