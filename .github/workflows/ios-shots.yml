@@ -40,7 +40,7 @@ jobs:
           print(next((x['udid'] for xs in d.values() for x in xs if x['name'] == '$1'), ''))"
           }
           UDID=""
-          for name in "iPhone 16 Plus" "iPhone 15 Plus" "iPhone 14 Plus" "iPhone 16 Pro Max"; do
+          for name in "iPhone 17 Pro Max" "iPhone 16 Pro Max" "iPhone 16 Plus" "iPhone 17"; do
             UDID=$(pick "$name"); [ -n "$UDID" ] && { echo "device: $name"; break; }
           done
           [ -n "$UDID" ] || { xcrun simctl list devices available; exit 1; }
