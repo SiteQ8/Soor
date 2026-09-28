@@ -635,3 +635,8 @@ h1, h2, h3, p, li { overflow-wrap: anywhere; }
   .p-perm > span:last-child, .p-perm > span.ar, .p-perm > span.en { grid-column: 1 / -1; }
   .p-home { display: none; }
 }
+
+/* Apple's badge, unchanged, linking to Soor on the App Store */
+.store{display:inline-block;margin-block-start:18px;border-radius:9px}
+.store img{display:block;height:50px;width:auto}
+.store:focus-visible{outline:2px solid currentColor;outline-offset:3px}

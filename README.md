@@ -6,6 +6,8 @@
 
 الموقع: https://soor.3li.info
 
+على App Store: https://apps.apple.com/kw/app/id6815804211
+
 ## ماذا يفعل
 
 سُور يرسم شبكتك ثم يقيّم ما يجده، ويحوّل كل اكتشاف إلى جملة يفهمها غير المختص مع خطوة إصلاح واضحة بالعربية والإنجليزية، فيكشف الكاميرات المكشوفة للإنترنت، والمنافذ الخطرة مثل منفذ تصحيح الأخطاء في صناديق أندرويد والتحكم عن بُعد المكشوف ومشاركة الملفات المفتوحة، وإعدادات الراوتر مثل خاصية UPnP التي تفتح منافذ إلى الإنترنت دون علمك، والأجهزة التي تظهر على الشبكة لأول مرة.
@@ -31,6 +33,8 @@
 **Soor** scans your home network the way a tester would. It finds every device on your network and reads the ports each one leaves open, tells what is exposed to the internet from what is safe inside, then ranks what it found by severity with a clear fix for each, cameras among them. It runs inside the phone, with no account, no server, and no data collection.
 
 Site: https://soor.3li.info
+
+On the App Store: https://apps.apple.com/kw/app/id6815804211
 
 ## Cameras and the factory password
 
